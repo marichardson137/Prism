@@ -4,6 +4,12 @@
 #include "raylib.h"
 #include "raymath.h"
 
+typedef Vector3 Vertex;
+
+typedef struct {
+    Vertex a, b, c;
+} Triangle;
+
 typedef struct {
     int numVertices;
     Vector3* vertices;
@@ -44,21 +50,31 @@ int main(void)
     // Mesh mesh = GenMeshSphere(3, 6, 9);
     Mesh mesh = GenMeshCube(2, 2, 2);
 
-    int vl[6][4] = {
-        { 0, 1, 3, 2 },
-        { 4, 0, 5, 3 },
-        { 7, 4, 6, 5 },
-        { 1, 7, 2, 6 },
-        { 5, 3, 6, 2 },
-        { 4, 7, 0, 1 }
+    int vl[12][3] = {
+        { 0, 1, 3 }, { 1, 2, 3 },
+        { 4, 0, 5 }, { 0, 3, 5 },
+        { 7, 4, 6 }, { 4, 5, 6 },
+        { 1, 7, 2 }, { 7, 6, 2 },
+        { 5, 3, 6 }, { 3, 2, 6 },
+        { 4, 7, 0 }, { 7, 1, 0 }
     };
 
-    Face faces[6];
+    Triangle triangles[12];
 
-    for (int i = 0; i < 6; i++) {
-        faces[i].numVertices = 4;
-        faces[i].vertices = (Vector3*)(mesh.vertices);
-        faces[i].indices = vl[i];
+    for (int i = 0; i < 12; i++) {
+        Vertex a, b, c;
+        a.x = mesh.vertices[vl[i][0] * 3];
+        a.y = mesh.vertices[vl[i][0] * 3 + 1];
+        a.z = mesh.vertices[vl[i][0] * 3 + 2];
+        b.x = mesh.vertices[vl[i][1] * 3];
+        b.y = mesh.vertices[vl[i][1] * 3 + 1];
+        b.z = mesh.vertices[vl[i][1] * 3 + 2];
+        c.x = mesh.vertices[vl[i][2] * 3];
+        c.y = mesh.vertices[vl[i][2] * 3 + 1];
+        c.z = mesh.vertices[vl[i][2] * 3 + 2];
+        triangles[i].a = a;
+        triangles[i].b = b;
+        triangles[i].c = c;
     }
 
     // Update loop
@@ -81,8 +97,12 @@ int main(void)
             DrawSphere(*pos, 0.1f, RED);
         }
 
-        for (int i = 0; i < 6; i++) {
-            DrawFace(faces[i], BEIGE);
+        for (int i = 0; i < 12; i++) {
+            Triangle triangle = triangles[i];
+            DrawTriangle3D(triangle.a, triangle.b, triangle.c, BEIGE);
+            DrawLine3D(triangle.a, triangle.b, BLACK);
+            DrawLine3D(triangle.b, triangle.c, BLACK);
+            DrawLine3D(triangle.a, triangle.c, BLACK);
         }
 
         EndMode3D();
