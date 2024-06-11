@@ -2,8 +2,9 @@
 #include "raymath.h"
 
 typedef struct {
-    int x, y, z;
-} Vertex;
+    int numVertices;
+    Vector3* vertices;
+} Face;
 
 int main(void)
 {
@@ -17,6 +18,18 @@ int main(void)
 
     SetTargetFPS(60);
 
+    // Build the Cube
+    Vector3 vertices[8] = {
+        (Vector3) { 1.0f, 1.0f, 1.0f },
+        (Vector3) { 1.0f, 1.0f, -1.0f },
+        (Vector3) { 1.0f, -1.0f, 1.0f },
+        (Vector3) { 1.0f, -1.0f, -1.0f },
+        (Vector3) { -1.0f, 1.0f, 1.0f },
+        (Vector3) { -1.0f, -1.0f, 1.0f },
+        (Vector3) { -1.0f, 1.0f, -1.0f },
+        (Vector3) { -1.0f, -1.0f, -1.0f }
+    };
+
     while (!WindowShouldClose()) {
 
         UpdateCamera(&camera, CAMERA_ORBITAL);
@@ -28,6 +41,10 @@ int main(void)
         BeginMode3D(camera);
 
         DrawGrid(10, 1.0f);
+
+        for (int i = 0; i < 8; i++) {
+            DrawSphere(vertices[i], 0.1f, RED);
+        }
 
         EndMode3D();
 
