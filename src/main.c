@@ -79,6 +79,8 @@ int main(void)
         triangles[i].color = BEIGE;
     }
 
+    Triangle* selectedTriangle = NULL;
+
     // Update loop
     while (!WindowShouldClose()) {
 
@@ -87,11 +89,18 @@ int main(void)
         Vector2 mousePos = GetMousePosition();
         Ray mouseRay = GetMouseRay(mousePos, camera);
 
+        float closestDistance = MAXFLOAT;
         for (int i = 0; i < 12; i++) {
             Triangle triangle = triangles[i];
             RayCollision collision = GetRayCollisionTriangle(mouseRay, triangle.a, triangle.b, triangle.c);
             if (collision.hit) {
-                triangles[i].color = BLUE;
+                if (collision.distance < closestDistance) {
+                    closestDistance = collision.distance;
+                    triangles[i].color = BLUE;
+                    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                        selectedTriangle = triangles + i;
+                    }
+                }
             } else {
                 triangles[i].color = BEIGE;
             }
@@ -109,10 +118,8 @@ int main(void)
 
         DrawGrid(10, 1.0f);
 
-        for (int i = 0; i < mesh.vertexCount; i++) {
-            Vector3* pos = (Vector3*)(mesh.vertices + 3 * i);
-            DrawSphere(*pos, 0.1f, RED);
-        }
+        if (selectedTriangle)
+            selectedTriangle->color = GREEN;
 
         for (int i = 0; i < 12; i++) {
             Triangle triangle = triangles[i];
@@ -123,6 +130,13 @@ int main(void)
         }
 
         EndMode3D();
+
+        for (int i = 0; i < mesh.vertexCount; i++) {
+            Vector3* pos = (Vector3*)(mesh.vertices + 3 * i);
+            Vector2 screenPos = GetWorldToScreen(*pos, camera);
+            DrawCircle(screenPos.x, screenPos.y, 5, RED);
+            // DrawSphere(*pos, 0.1f, RED);
+        }
 
         for (int i = 0; i < mesh.vertexCount; i += 3) {
             Vector3* pos = (Vector3*)(mesh.vertices + i);
