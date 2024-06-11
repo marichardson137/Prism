@@ -46,11 +46,11 @@ int main(void)
 
     int vl[6][4] = {
         { 0, 1, 3, 2 },
-        { 4, 0, 3, 5 },
-        { 7, 4, 5, 6 },
-        { 1, 7, 6, 2 },
-        { 5, 3, 2, 6 },
-        { 4, 7, 1, 0 }
+        { 4, 0, 5, 3 },
+        { 7, 4, 6, 5 },
+        { 1, 7, 2, 6 },
+        { 5, 3, 6, 2 },
+        { 4, 7, 0, 1 }
     };
 
     Face faces[6];
@@ -82,7 +82,7 @@ int main(void)
         }
 
         for (int i = 0; i < 6; i++) {
-            DrawFace(faces[i], WHITE);
+            DrawFace(faces[i], BEIGE);
         }
 
         EndMode3D();
@@ -91,7 +91,7 @@ int main(void)
             Vector3* pos = (Vector3*)(mesh.vertices + i);
             char text[2];
             sprintf(text, "%d", (int)(i / 3));
-            DrawText3D(camera, *pos, text, 20, WHITE);
+            DrawText3D(camera, *pos, text, 20, RAYWHITE);
         }
 
         EndDrawing();
