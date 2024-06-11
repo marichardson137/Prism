@@ -8,6 +8,7 @@ typedef Vector3 Vertex;
 
 typedef struct {
     Vertex a, b, c;
+    Color color;
 } Triangle;
 
 typedef struct {
@@ -75,6 +76,7 @@ int main(void)
         triangles[i].a = a;
         triangles[i].b = b;
         triangles[i].c = c;
+        triangles[i].color = BEIGE;
     }
 
     // Update loop
@@ -82,11 +84,26 @@ int main(void)
 
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
+        Vector2 mousePos = GetMousePosition();
+        Ray mouseRay = GetMouseRay(mousePos, camera);
+
+        for (int i = 0; i < 12; i++) {
+            Triangle triangle = triangles[i];
+            RayCollision collision = GetRayCollisionTriangle(mouseRay, triangle.a, triangle.b, triangle.c);
+            if (collision.hit) {
+                triangles[i].color = BLUE;
+            } else {
+                triangles[i].color = BEIGE;
+            }
+        }
+
         BeginDrawing();
 
         DrawFPS(10, 10);
 
         ClearBackground(BLACK);
+
+        // DrawCircle(mousePos.x, mousePos.y, 10, GREEN);
 
         BeginMode3D(camera);
 
@@ -99,7 +116,7 @@ int main(void)
 
         for (int i = 0; i < 12; i++) {
             Triangle triangle = triangles[i];
-            DrawTriangle3D(triangle.a, triangle.b, triangle.c, BEIGE);
+            DrawTriangle3D(triangle.a, triangle.b, triangle.c, triangle.color);
             DrawLine3D(triangle.a, triangle.b, BLACK);
             DrawLine3D(triangle.b, triangle.c, BLACK);
             DrawLine3D(triangle.a, triangle.c, BLACK);
