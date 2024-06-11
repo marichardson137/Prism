@@ -24,7 +24,7 @@ int main(void)
     SetTargetFPS(60);
 
     // Build the Cube
-    Mesh mesh = GenMeshCube(2, 2, 2);
+    Mesh mesh = GenMeshSphere(3, 6, 9);
 
     while (!WindowShouldClose()) {
 
