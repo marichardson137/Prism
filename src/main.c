@@ -120,6 +120,16 @@ int main(void)
 
         if (selectedTriangle) {
             selectedTriangle->color = GREEN;
+            if (IsKeyDown(KEY_W)) {
+                selectedTriangle->a.y += 0.01f;
+                selectedTriangle->b.y += 0.01f;
+                selectedTriangle->c.y += 0.01f;
+            }
+            if (IsKeyDown(KEY_S)) {
+                selectedTriangle->a.y -= 0.01f;
+                selectedTriangle->b.y -= 0.01f;
+                selectedTriangle->c.y -= 0.01f;
+            }
         }
 
         for (int i = 0; i < 12; i++) {
