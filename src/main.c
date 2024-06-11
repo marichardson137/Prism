@@ -6,6 +6,11 @@ typedef struct {
     Vector3* vertices;
 } Face;
 
+void DrawFace(Face face, Color color)
+{
+    DrawTriangleStrip3D(face.vertices, face.numVertices, color);
+}
+
 int main(void)
 {
     InitWindow(1280, 720, "Prism");
@@ -20,15 +25,17 @@ int main(void)
 
     // Build the Cube
     Vector3 vertices[8] = {
-        (Vector3) { 1.0f, 1.0f, 1.0f },
+        (Vector3) { 1.0f, -1.0f, -1.0f },
         (Vector3) { 1.0f, 1.0f, -1.0f },
         (Vector3) { 1.0f, -1.0f, 1.0f },
-        (Vector3) { 1.0f, -1.0f, -1.0f },
+        (Vector3) { 1.0f, 1.0f, 1.0f },
         (Vector3) { -1.0f, 1.0f, 1.0f },
         (Vector3) { -1.0f, -1.0f, 1.0f },
         (Vector3) { -1.0f, 1.0f, -1.0f },
         (Vector3) { -1.0f, -1.0f, -1.0f }
     };
+
+    Face f1 = { 4, vertices };
 
     while (!WindowShouldClose()) {
 
@@ -45,6 +52,8 @@ int main(void)
         for (int i = 0; i < 8; i++) {
             DrawSphere(vertices[i], 0.1f, RED);
         }
+
+        DrawFace(f1, WHITE);
 
         EndMode3D();
 
