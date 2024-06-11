@@ -11,21 +11,32 @@ void DrawFace(Face face, Color color)
     DrawTriangleStrip3D(face.vertices, face.numVertices, color);
 }
 
+void DrawQuad3D(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4, Color color)
+{
+    // Draw the first triangle
+    DrawTriangle3D(v1, v2, v3, color);
+    // Draw the second triangle
+    DrawTriangle3D(v3, v4, v1, color);
+}
+
 int main(void)
 {
+    // Window setting
     InitWindow(1280, 720, "Prism");
+    SetTargetFPS(60);
 
+    // Camera settings
     Camera camera = { 0 };
     camera.position = (Vector3) { 10.0f, 10.0f, 10.0f };
     camera.target = (Vector3) { 0.0f, 0.0f, 0.0f };
     camera.up = (Vector3) { 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
 
-    SetTargetFPS(60);
+    // Build the Mesh
+    // Mesh mesh = GenMeshSphere(3, 6, 9);
+    Mesh mesh = GenMeshCube(2, 2, 2);
 
-    // Build the Cube
-    Mesh mesh = GenMeshSphere(3, 6, 9);
-
+    // Update loop
     while (!WindowShouldClose()) {
 
         UpdateCamera(&camera, CAMERA_ORBITAL);
@@ -43,7 +54,10 @@ int main(void)
             DrawSphere(*pos, 0.1f, RED);
         }
 
-        // DrawFace(f1, WHITE);
+        for (int i = 0; i < 6; i++) {
+            Vector3* start = (Vector3*)(mesh.vertices + 3 * i);
+            DrawQuad3D(start[0], start[1], start[2], start[3], WHITE);
+        }
 
         EndMode3D();
 

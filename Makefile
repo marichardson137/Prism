@@ -6,3 +6,7 @@ CFILES = src/*.c
 
 build_osx:
 	$(COMPILER) $(CFILES) $(SOURCE_LIBS) $(OSX_OUT) $(OSX_OPT)
+
+run:
+	make build_osx
+	./bin/build_osx
