@@ -118,8 +118,9 @@ int main(void)
 
         DrawGrid(10, 1.0f);
 
-        if (selectedTriangle)
+        if (selectedTriangle) {
             selectedTriangle->color = GREEN;
+        }
 
         for (int i = 0; i < 12; i++) {
             Triangle triangle = triangles[i];
@@ -136,6 +137,15 @@ int main(void)
             Vector2 screenPos = GetWorldToScreen(*pos, camera);
             DrawCircle(screenPos.x, screenPos.y, 5, RED);
             // DrawSphere(*pos, 0.1f, RED);
+        }
+
+        if (selectedTriangle) {
+            Vector2 screenPos = GetWorldToScreen(selectedTriangle->a, camera);
+            DrawCircle(screenPos.x, screenPos.y, 5, YELLOW);
+            screenPos = GetWorldToScreen(selectedTriangle->b, camera);
+            DrawCircle(screenPos.x, screenPos.y, 5, YELLOW);
+            screenPos = GetWorldToScreen(selectedTriangle->c, camera);
+            DrawCircle(screenPos.x, screenPos.y, 5, YELLOW);
         }
 
         for (int i = 0; i < mesh.vertexCount; i += 3) {
