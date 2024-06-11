@@ -24,18 +24,7 @@ int main(void)
     SetTargetFPS(60);
 
     // Build the Cube
-    Vector3 vertices[8] = {
-        (Vector3) { 1.0f, -1.0f, -1.0f },
-        (Vector3) { 1.0f, 1.0f, -1.0f },
-        (Vector3) { 1.0f, -1.0f, 1.0f },
-        (Vector3) { 1.0f, 1.0f, 1.0f },
-        (Vector3) { -1.0f, 1.0f, 1.0f },
-        (Vector3) { -1.0f, -1.0f, 1.0f },
-        (Vector3) { -1.0f, 1.0f, -1.0f },
-        (Vector3) { -1.0f, -1.0f, -1.0f }
-    };
-
-    Face f1 = { 4, vertices };
+    Mesh mesh = GenMeshCube(2, 2, 2);
 
     while (!WindowShouldClose()) {
 
@@ -49,11 +38,12 @@ int main(void)
 
         DrawGrid(10, 1.0f);
 
-        for (int i = 0; i < 8; i++) {
-            DrawSphere(vertices[i], 0.1f, RED);
+        for (int i = 0; i < mesh.vertexCount; i++) {
+            Vector3* pos = (Vector3*)(mesh.vertices + 3 * i);
+            DrawSphere(*pos, 0.1f, RED);
         }
 
-        DrawFace(f1, WHITE);
+        // DrawFace(f1, WHITE);
 
         EndMode3D();
 
