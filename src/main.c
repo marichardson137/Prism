@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "raylib.h"
 #include "raymath.h"
 
@@ -11,12 +14,12 @@ void DrawFace(Face face, Color color)
     DrawTriangleStrip3D(face.vertices, face.numVertices, color);
 }
 
-void DrawQuad3D(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4, Color color)
+void DrawText3D(Camera camera, Vector3 position, const char* text, int fontSize, Color color)
 {
-    // Draw the first triangle
-    DrawTriangle3D(v1, v2, v3, color);
-    // Draw the second triangle
-    DrawTriangle3D(v3, v4, v1, color);
+    // Convert the 3D position to 2D screen space
+    Vector2 screenPos = GetWorldToScreen(position, camera);
+    // Draw the text at the 2D screen position
+    DrawText(text, (int)screenPos.x, (int)screenPos.y, fontSize, color);
 }
 
 int main(void)
@@ -43,6 +46,8 @@ int main(void)
 
         BeginDrawing();
 
+        DrawFPS(10, 10);
+
         ClearBackground(BLACK);
 
         BeginMode3D(camera);
@@ -54,12 +59,14 @@ int main(void)
             DrawSphere(*pos, 0.1f, RED);
         }
 
-        for (int i = 0; i < 6; i++) {
-            Vector3* start = (Vector3*)(mesh.vertices + 3 * i);
-            DrawQuad3D(start[0], start[1], start[2], start[3], WHITE);
-        }
-
         EndMode3D();
+
+        for (int i = 0; i < mesh.vertexCount; i += 3) {
+            Vector3* pos = (Vector3*)(mesh.vertices + i);
+            char text[2];
+            sprintf(text, "%d", (int)(i / 3));
+            DrawText3D(camera, *pos, text, 20, WHITE);
+        }
 
         EndDrawing();
     }
