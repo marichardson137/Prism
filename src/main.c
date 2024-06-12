@@ -3,6 +3,9 @@
 
 #include "raylib.h"
 #include "raymath.h"
+#include "interface.h"
+
+#define N 15
 
 typedef Vector3 Vertex;
 
@@ -34,8 +37,56 @@ void DrawText3D(Camera camera, Vector3 position, const char* text, int fontSize,
     DrawText(text, (int)screenPos.x, (int)screenPos.y, fontSize, color);
 }
 
+Vector3 ComputeCenter(Vector3* vertices, int vertexCount)
+{
+    Vector3 center = { 0.0f, 0.0f, 0.0f };
+
+    if (vertexCount == 0)
+        return center;
+
+    for (int i = 0; i < vertexCount; i++) {
+        center.x += vertices[i].x;
+        center.y += vertices[i].y;
+        center.z += vertices[i].z;
+    }
+
+    center.x /= vertexCount;
+    center.y /= vertexCount;
+    center.z /= vertexCount;
+
+    return center;
+}
+
 int main(void)
 {
+    int ncontours = 1;
+    int cntr[1] = { N };
+    double vertices[N + 1][2] = {
+        { 0.0, 0.0 },
+        { 200.0, 100.0 },
+        { 300.0, 120.0 },
+        { 400.0, 140.0 },
+        { 500.0, 120.0 },
+        { 600.0, 100.0 },
+        { 620.0, 200.0 },
+        { 640.0, 300.0 },
+        { 570.0, 400.0 },
+        { 600.0, 500.0 },
+        { 600.0, 600.0 },
+        { 500.0, 600.0 },
+        { 400.0, 600.0 },
+        { 300.0, 600.0 },
+        { 200.0, 600.0 },
+        { 100.0, 600.0 }
+    };
+    int ts[N - 2][3];
+
+    triangulate_polygon(ncontours, cntr, vertices, ts);
+
+    for (int i = 0; i < N - 2; i++)
+        printf("triangle #%d: %d %d %d\n", i,
+            ts[i][0], ts[i][1], ts[i][2]);
+
     // Window setting
     InitWindow(1280, 720, "Prism");
     SetTargetFPS(60);
@@ -61,7 +112,6 @@ int main(void)
     };
 
     Triangle triangles[12];
-
     for (int i = 0; i < 12; i++) {
         Vertex a, b, c;
         a.x = mesh.vertices[vl[i][0] * 3];
@@ -81,6 +131,8 @@ int main(void)
 
     Triangle* selectedTriangle = NULL;
 
+    Vertex face[5] = { (Vertex) { 0.0, 0.0, 0.0 }, triangles[0].a, triangles[1].a, triangles[1].b, triangles[1].c };
+
     // Update loop
     while (!WindowShouldClose()) {
 
@@ -89,22 +141,22 @@ int main(void)
         Vector2 mousePos = GetMousePosition();
         Ray mouseRay = GetMouseRay(mousePos, camera);
 
-        float closestDistance = MAXFLOAT;
-        for (int i = 0; i < 12; i++) {
-            Triangle triangle = triangles[i];
-            RayCollision collision = GetRayCollisionTriangle(mouseRay, triangle.a, triangle.b, triangle.c);
-            if (collision.hit) {
-                if (collision.distance < closestDistance) {
-                    closestDistance = collision.distance;
-                    triangles[i].color = BLUE;
-                    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                        selectedTriangle = triangles + i;
-                    }
-                }
-            } else {
-                triangles[i].color = BEIGE;
-            }
-        }
+        // float closestDistance = MAXFLOAT;
+        // for (int i = 0; i < 12; i++) {
+        //     Triangle triangle = triangles[i];
+        //     RayCollision collision = GetRayCollisionTriangle(mouseRay, triangle.a, triangle.b, triangle.c);
+        //     if (collision.hit) {
+        //         if (collision.distance < closestDistance) {
+        //             closestDistance = collision.distance;
+        //             triangles[i].color = BLUE;
+        //             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        //                 selectedTriangle = triangles + i;
+        //             }
+        //         }
+        //     } else {
+        //         triangles[i].color = BEIGE;
+        //     }
+        // }
 
         BeginDrawing();
 
@@ -112,57 +164,79 @@ int main(void)
 
         ClearBackground(BLACK);
 
-        // DrawCircle(mousePos.x, mousePos.y, 10, GREEN);
-
         BeginMode3D(camera);
 
-        DrawGrid(10, 1.0f);
+        // DrawGrid(10, 1.0f);
 
-        if (selectedTriangle) {
-            selectedTriangle->color = GREEN;
-            if (IsKeyDown(KEY_W)) {
-                selectedTriangle->a.y += 0.01f;
-                selectedTriangle->b.y += 0.01f;
-                selectedTriangle->c.y += 0.01f;
-            }
-            if (IsKeyDown(KEY_S)) {
-                selectedTriangle->a.y -= 0.01f;
-                selectedTriangle->b.y -= 0.01f;
-                selectedTriangle->c.y -= 0.01f;
-            }
-        }
+        // if (selectedTriangle) {
+        //     selectedTriangle->color = DARKBLUE;
+        //     if (IsKeyDown(KEY_W)) {
+        //         selectedTriangle->a.y += 0.01f;
+        //         selectedTriangle->b.y += 0.01f;
+        //         selectedTriangle->c.y += 0.01f;
+        //     }
+        //     if (IsKeyDown(KEY_S)) {
+        //         selectedTriangle->a.y -= 0.01f;
+        //         selectedTriangle->b.y -= 0.01f;
+        //         selectedTriangle->c.y -= 0.01f;
+        //     }
+        // }
 
-        for (int i = 0; i < 12; i++) {
-            Triangle triangle = triangles[i];
-            DrawTriangle3D(triangle.a, triangle.b, triangle.c, triangle.color);
-            DrawLine3D(triangle.a, triangle.b, BLACK);
-            DrawLine3D(triangle.b, triangle.c, BLACK);
-            DrawLine3D(triangle.a, triangle.c, BLACK);
-        }
+        // for (int i = 0; i < 12; i++) {
+        // Triangle triangle = triangles[i];
+        // DrawTriangle3D(triangle.a, triangle.b, triangle.c, triangle.color);
+        // DrawLine3D(triangle.a, triangle.b, BLACK);
+        // DrawLine3D(triangle.b, triangle.c, BLACK);
+        // DrawLine3D(triangle.a, triangle.c, BLACK);
+        // }
 
         EndMode3D();
 
-        for (int i = 0; i < mesh.vertexCount; i++) {
-            Vector3* pos = (Vector3*)(mesh.vertices + 3 * i);
-            Vector2 screenPos = GetWorldToScreen(*pos, camera);
-            DrawCircle(screenPos.x, screenPos.y, 5, RED);
-            // DrawSphere(*pos, 0.1f, RED);
+        // for (int i = 0; i < mesh.vertexCount; i++) {
+        //     Vector3* pos = (Vector3*)(mesh.vertices + 3 * i);
+        //     Vector2 screenPos = GetWorldToScreen(*pos, camera);
+        //     DrawCircle(screenPos.x, screenPos.y, 5, RED);
+        // }
+
+        // face[0] = ComputeCenter(face + 1, 4);
+        // Vector2 flatCoords[6];
+        // for (int i = 0; i < 6; i++) {
+        //     flatCoords[i] = GetWorldToScreen(face[i], camera);
+        // }
+        // flatCoords[5] = flatCoords[1];
+        // DrawTriangleFan(flatCoords, 6, WHITE);
+
+        // if (selectedTriangle) {
+        //     Vector2 screenPos = GetWorldToScreen(selectedTriangle->a, camera);
+        //     DrawCircle(screenPos.x, screenPos.y, 5, YELLOW);
+        //     screenPos = GetWorldToScreen(selectedTriangle->b, camera);
+        //     DrawCircle(screenPos.x, screenPos.y, 5, YELLOW);
+        //     screenPos = GetWorldToScreen(selectedTriangle->c, camera);
+        //     DrawCircle(screenPos.x, screenPos.y, 5, YELLOW);
+        // }
+
+        // for (int i = 0; i < mesh.vertexCount; i += 3) {
+        //     Vector3* pos = (Vector3*)(mesh.vertices + i);
+        //     char text[2];
+        //     sprintf(text, "%d", (int)(i / 3));
+        //     DrawText3D(camera, *pos, text, 20, RAYWHITE);
+        // }
+
+        for (int i = 0; i < N - 2; i++) {
+            double* a = vertices[ts[i][0]];
+            double* b = vertices[ts[i][1]];
+            double* c = vertices[ts[i][2]];
+            DrawTriangle((Vector2) { (float)a[0], (float)a[1] }, (Vector2) { (float)c[0], (float)c[1] }, (Vector2) { (float)b[0], (float)b[1] }, BEIGE);
+            DrawLine((int)a[0], (int)a[1], (int)b[0], (int)b[1], BLACK);
+            DrawLine((int)a[0], (int)a[1], (int)c[0], (int)c[1], BLACK);
+            DrawLine((int)c[0], (int)c[1], (int)b[0], (int)b[1], BLACK);
         }
 
-        if (selectedTriangle) {
-            Vector2 screenPos = GetWorldToScreen(selectedTriangle->a, camera);
-            DrawCircle(screenPos.x, screenPos.y, 5, YELLOW);
-            screenPos = GetWorldToScreen(selectedTriangle->b, camera);
-            DrawCircle(screenPos.x, screenPos.y, 5, YELLOW);
-            screenPos = GetWorldToScreen(selectedTriangle->c, camera);
-            DrawCircle(screenPos.x, screenPos.y, 5, YELLOW);
-        }
-
-        for (int i = 0; i < mesh.vertexCount; i += 3) {
-            Vector3* pos = (Vector3*)(mesh.vertices + i);
-            char text[2];
-            sprintf(text, "%d", (int)(i / 3));
-            DrawText3D(camera, *pos, text, 20, RAYWHITE);
+        for (int i = 1; i < N + 1; i++) {
+            DrawCircle(vertices[i][0], vertices[i][1], 5, RED);
+            char text[3];
+            sprintf(text, "%d", i);
+            DrawText(text, vertices[i][0], vertices[i][1], 20, RAYWHITE);
         }
 
         EndDrawing();
