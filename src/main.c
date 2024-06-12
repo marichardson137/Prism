@@ -5,7 +5,8 @@
 #include "raymath.h"
 #include "interface.h"
 
-#define N 15
+#define N 4
+#define L 4
 
 typedef Vector3 Vertex;
 
@@ -59,31 +60,27 @@ Vector3 ComputeCenter(Vector3* vertices, int vertexCount)
 
 int main(void)
 {
-    int ncontours = 1;
-    int cntr[1] = { N };
-    double vertices[N + 1][2] = {
+    int ncontours = 2;
+    int cntr[2] = { N, L };
+    double vertices[N + L + 1][2] = {
         { 0.0, 0.0 },
-        { 200.0, 100.0 },
-        { 300.0, 120.0 },
-        { 400.0, 140.0 },
-        { 500.0, 120.0 },
+
+        { 100.0, 100.0 },
         { 600.0, 100.0 },
-        { 620.0, 200.0 },
-        { 640.0, 300.0 },
-        { 570.0, 400.0 },
-        { 600.0, 500.0 },
         { 600.0, 600.0 },
-        { 500.0, 600.0 },
-        { 400.0, 600.0 },
-        { 300.0, 600.0 },
-        { 200.0, 600.0 },
-        { 100.0, 600.0 }
+        { 100.0, 600.0 },
+
+        { 200.0, 400.0 },
+        { 400.0, 400.0 },
+        { 400.0, 200.0 },
+        { 200.0, 200.0 }
+
     };
-    int ts[N - 2][3];
+    int ts[N + L + 10][3];
 
     triangulate_polygon(ncontours, cntr, vertices, ts);
 
-    for (int i = 0; i < N - 2; i++)
+    for (int i = 0; i < N + L + 10; i++)
         printf("triangle #%d: %d %d %d\n", i,
             ts[i][0], ts[i][1], ts[i][2]);
 
@@ -222,7 +219,7 @@ int main(void)
         //     DrawText3D(camera, *pos, text, 20, RAYWHITE);
         // }
 
-        for (int i = 0; i < N - 2; i++) {
+        for (int i = 0; i < N + L; i++) {
             double* a = vertices[ts[i][0]];
             double* b = vertices[ts[i][1]];
             double* c = vertices[ts[i][2]];
@@ -232,7 +229,7 @@ int main(void)
             DrawLine((int)c[0], (int)c[1], (int)b[0], (int)b[1], BLACK);
         }
 
-        for (int i = 1; i < N + 1; i++) {
+        for (int i = 1; i < N + L + 1; i++) {
             DrawCircle(vertices[i][0], vertices[i][1], 5, RED);
             char text[3];
             sprintf(text, "%d", i);
