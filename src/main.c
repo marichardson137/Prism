@@ -100,6 +100,9 @@ void _TriangulateAndDrawPolygon(_Model model, _Polygon polygon, Camera camera)
         _Vertex v2 = model.vertices[polygon.indices[triangles[i][1] - 1]];
         _Vertex v3 = model.vertices[polygon.indices[triangles[i][2] - 1]];
         DrawTriangle3D(v1, v3, v2, polygon.color);
+        DrawLine3D(v1, v2, BLACK);
+        DrawLine3D(v1, v3, BLACK);
+        DrawLine3D(v3, v2, BLACK);
     };
 }
 
@@ -139,25 +142,6 @@ int main(void)
         6
     };
 
-    // int ncontours = 2;
-    // int cntr[2] = { 5, 5 };
-    // double vertices[1][2] = {
-    //     { 0.0, 0.0 },
-
-    //     { 100.0, 100.0 },
-    //     { 600.0, 100.0 },
-    //     { 600.0, 600.0 },
-    //     { 100.0, 600.0 },
-
-    //     { 200.0, 400.0 },
-    //     { 400.0, 400.0 },
-    //     { 400.0, 200.0 },
-    //     { 200.0, 200.0 }
-
-    // };
-    // int ts[10 + 10][3];
-    // triangulate_polygon(ncontours, cntr, vertices, ts);
-
     // Window setting
     InitWindow(1280, 720, "Prism");
     SetTargetFPS(60);
@@ -187,26 +171,18 @@ int main(void)
 
         DrawGrid(10, 1.0f);
 
+        if (IsKeyDown(KEY_W)) {
+            model.vertices[0].y += 0.01f;
+        }
+        if (IsKeyDown(KEY_S)) {
+            model.vertices[0].y -= 0.01f;
+        }
+
         for (int i = 0; i < 6; i++) {
             _TriangulateAndDrawPolygon(model, model.polygons[i], camera);
         }
 
         EndMode3D();
-
-        // for (int i = 0; i < 8; i++) {
-        //     Vector2 screenPos = GetWorldToScreen(vertices[i], camera);
-        //     DrawCircle(screenPos.x, screenPos.y, 5, RED);
-        // }
-
-        // for (int i = 0; i < N + L; i++) {
-        //     double* a = vertices[ts[i][0]];
-        //     double* b = vertices[ts[i][1]];
-        //     double* c = vertices[ts[i][2]];
-        //     DrawTriangle((Vector2) { (float)a[0], (float)a[1] }, (Vector2) { (float)c[0], (float)c[1] }, (Vector2) { (float)b[0], (float)b[1] }, BEIGE);
-        //     DrawLine((int)a[0], (int)a[1], (int)b[0], (int)b[1], BLACK);
-        //     DrawLine((int)a[0], (int)a[1], (int)c[0], (int)c[1], BLACK);
-        //     DrawLine((int)c[0], (int)c[1], (int)b[0], (int)b[1], BLACK);
-        // }
 
         for (int i = 0; i < 8; i++) {
             char text[2];
