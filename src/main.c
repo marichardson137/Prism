@@ -172,10 +172,16 @@ int main(void)
         DrawGrid(10, 1.0f);
 
         if (IsKeyDown(KEY_W)) {
-            model.vertices[0].y += 0.01f;
+            model.vertices[6].y += 0.02f;
+            model.vertices[7].y += 0.02f;
+            model.vertices[3].y += 0.02f;
+            model.vertices[2].y += 0.02f;
         }
         if (IsKeyDown(KEY_S)) {
-            model.vertices[0].y -= 0.01f;
+            model.vertices[6].y -= 0.02f;
+            model.vertices[7].y -= 0.02f;
+            model.vertices[3].y -= 0.02f;
+            model.vertices[2].y -= 0.02f;
         }
 
         for (int i = 0; i < 6; i++) {
