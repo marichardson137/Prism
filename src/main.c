@@ -48,28 +48,36 @@ void _TriangulateAndDrawPolygon(_Model model, _Polygon polygon, Camera camera)
     normal = Vector3Normalize(normal);
 
     Vector3 center = Vector3Lerp(v1, v3, 0.5);
+    DrawSphere(center, 0.1f, RED);
     Ray ray = { center, normal };
-    DrawSphere(center, 0.2f, RED);
     DrawRay(ray, GREEN);
 
+    Vector3 up = { 0.0f, 1.0f, 0.0f };
+    Ray ray2 = { center, up };
+    DrawRay(ray2, BLUE);
+
     // Create a rotation matrix to align the normal with the z-axis
-    Vector3 up
-        = { 0.0f, 0.0f, 1.0f };
-    Vector3 rotationAxis = Vector3CrossProduct(normal, up);
-    float angle = acosf(Vector3DotProduct(normal, up));
-    Matrix rotationMatrix = MatrixRotate(rotationAxis, angle);
+    Matrix rotationMatrix;
+    if (Vector3Equals(up, Vector3Negate(normal))) {
+        rotationMatrix = MatrixScale(-1, 1, 1);
+    } else {
+        Vector3 rotationAxis = Vector3CrossProduct(normal, up);
+        Ray ray3 = { center, rotationAxis };
+        DrawRay(ray3, RED);
+        float angle = acosf(Vector3DotProduct(normal, up));
+        rotationMatrix = MatrixRotate(rotationAxis, angle);
+    }
 
     Vector2 vertices2D[polygon.numIndices];
 
     // Project each vertex onto the 2D plane
     for (int i = 0; i < polygon.numIndices; i++) {
         _Vertex v = model.vertices[polygon.indices[i]];
-        // printf("%d -> %d -> %.1f %.1f %.1f\n", i, polygon.indices[i], v.x, v.y, v.z);
         DrawSphere(v, 0.2f, BLUE);
         // Rotate the vertex to align the polygon's plane with the z-axis
         Vector3 rotatedVertex = Vector3Transform(v, rotationMatrix);
         // Drop the z-coordinate
-        vertices2D[i] = (Vector2) { rotatedVertex.x, rotatedVertex.y };
+        vertices2D[i] = (Vector2) { rotatedVertex.x, rotatedVertex.z };
     }
 
     double vertices[polygon.numIndices + 1][2];
@@ -82,17 +90,17 @@ void _TriangulateAndDrawPolygon(_Model model, _Polygon polygon, Camera camera)
     memset(triangles, 0, sizeof(triangles));
     int cntr[1] = { polygon.numIndices };
 
-    // triangulate_polygon(1, cntr, vertices, triangles);
+    triangulate_polygon(1, cntr, vertices, triangles);
 
-    // for (int i = 0; i < polygon.numIndices; i++) {
-    //     if (triangles[i][0] == 0) {
-    //         break;
-    //     }
-    //     _Vertex v1 = model.vertices[polygon.indices[triangles[i][0] - 1]];
-    //     _Vertex v2 = model.vertices[polygon.indices[triangles[i][1] - 1]];
-    //     _Vertex v3 = model.vertices[polygon.indices[triangles[i][2] - 1]];
-    //     DrawTriangle3D(v1, v3, v2, polygon.color);
-    // };
+    for (int i = 0; i < polygon.numIndices; i++) {
+        if (triangles[i][0] == 0) {
+            break;
+        }
+        _Vertex v1 = model.vertices[polygon.indices[triangles[i][0] - 1]];
+        _Vertex v2 = model.vertices[polygon.indices[triangles[i][1] - 1]];
+        _Vertex v3 = model.vertices[polygon.indices[triangles[i][2] - 1]];
+        DrawTriangle3D(v1, v3, v2, polygon.color);
+    };
 }
 
 int main(void)
@@ -115,7 +123,7 @@ int main(void)
         { 5, 4, 7, 6 },
         { 1, 5, 6, 2 },
         { 3, 2, 6, 7 },
-        { 5, 1, 0, 4 }
+        { 4, 5, 1, 0 }
     };
     _Polygon polygons[6];
     for (int i = 0; i < 6; i++) {
