@@ -1,34 +1,30 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "raylib.h"
 #include "raymath.h"
 #include "interface.h"
 
-#define N 4
-#define L 4
+typedef Vector3 _Vertex;
 
-typedef Vector3 Vertex;
-
-typedef struct {
-    Vertex a, b, c;
-    Color color;
-} Triangle;
+// typedef struct {
+//     _Vertex a, b, c;
+// } _Triangle;
 
 typedef struct {
-    int numVertices;
-    Vector3* vertices;
     int* indices;
-} Face;
+    int numIndices;
+    int (*triangles)[3];
+    Color color;
+} _Polygon;
 
-void DrawFace(Face face, Color color)
-{
-    Vector3 vertices[face.numVertices];
-    for (int i = 0; i < face.numVertices; i++) {
-        vertices[i] = face.vertices[face.indices[i]];
-    }
-    DrawTriangleStrip3D(vertices, face.numVertices, color);
-}
+typedef struct {
+    _Vertex* vertices;
+    int numVertices;
+    _Polygon* polygons;
+    int numPolygons;
+} _Model;
 
 void DrawText3D(Camera camera, Vector3 position, const char* text, int fontSize, Color color)
 {
@@ -38,51 +34,130 @@ void DrawText3D(Camera camera, Vector3 position, const char* text, int fontSize,
     DrawText(text, (int)screenPos.x, (int)screenPos.y, fontSize, color);
 }
 
-Vector3 ComputeCenter(Vector3* vertices, int vertexCount)
+void _TriangulateAndDrawPolygon(_Model model, _Polygon polygon, Camera camera)
 {
-    Vector3 center = { 0.0f, 0.0f, 0.0f };
+    // Translate to 2D...
+    // Find the normal of the polygon's plane
+    _Vertex v1 = model.vertices[polygon.indices[0]];
+    _Vertex v2 = model.vertices[polygon.indices[1]];
+    _Vertex v3 = model.vertices[polygon.indices[2]];
 
-    if (vertexCount == 0)
-        return center;
+    printf("Stage1\n");
 
-    for (int i = 0; i < vertexCount; i++) {
-        center.x += vertices[i].x;
-        center.y += vertices[i].y;
-        center.z += vertices[i].z;
+    Vector3 edge1 = Vector3Subtract(v2, v1);
+    Vector3 edge2 = Vector3Subtract(v3, v1);
+    Vector3 normal = Vector3CrossProduct(edge1, edge2);
+    normal = Vector3Normalize(normal);
+
+    printf("Stage2\n");
+
+    // Create a rotation matrix to align the normal with the z-axis
+    Vector3 up = { 0.0f, 0.0f, 1.0f };
+    Vector3 rotationAxis = Vector3CrossProduct(normal, up);
+    float angle = acosf(Vector3DotProduct(normal, up));
+    Matrix rotationMatrix = MatrixRotate(rotationAxis, angle);
+
+    printf("Stage3\n");
+
+    Vector2 vertices2D[polygon.numIndices];
+
+    printf("Stage4\n");
+
+    // Project each vertex onto the 2D plane
+    for (int i = 0; i < polygon.numIndices; i++) {
+        _Vertex v = model.vertices[polygon.indices[i]];
+        printf("%d -> %d -> %.1f %.1f %.1f\n", i, polygon.indices[i], v.x, v.y, v.z);
+        DrawSphere(v, 0.2f, BLUE);
+        // Rotate the vertex to align the polygon's plane with the z-axis
+        Vector3 rotatedVertex = Vector3Transform(v, rotationMatrix);
+        // Drop the z-coordinate
+        vertices2D[i] = (Vector2) { rotatedVertex.x, rotatedVertex.y };
     }
 
-    center.x /= vertexCount;
-    center.y /= vertexCount;
-    center.z /= vertexCount;
+    printf("Stage5\n");
 
-    return center;
+    double vertices[polygon.numIndices + 1][2];
+    for (int i = 0; i < polygon.numIndices; i++) {
+        Vector2 screenPos = vertices2D[i];
+        vertices[i + 1][0] = screenPos.x;
+        vertices[i + 1][1] = screenPos.y;
+        printf("%d -> %.1f %.1f\n", i, screenPos.x, screenPos.y);
+    }
+    int triangles[polygon.numIndices][3];
+    memset(triangles, 0, sizeof(triangles));
+    int cntr[1] = { polygon.numIndices };
+
+    printf("Stage6\n");
+
+    triangulate_polygon(1, cntr, vertices, triangles);
+
+    printf("Stage7\n");
+
+    for (int i = 0; i < polygon.numIndices; i++) {
+        if (triangles[i][0] == 0) {
+            break;
+        }
+        _Vertex v1 = model.vertices[polygon.indices[triangles[i][0] - 1]];
+        _Vertex v2 = model.vertices[polygon.indices[triangles[i][1] - 1]];
+        _Vertex v3 = model.vertices[polygon.indices[triangles[i][2] - 1]];
+        DrawTriangle3D(v1, v3, v2, polygon.color);
+    };
 }
 
 int main(void)
 {
-    int ncontours = 2;
-    int cntr[2] = { N, L };
-    double vertices[N + L + 1][2] = {
-        { 0.0, 0.0 },
 
-        { 100.0, 100.0 },
-        { 600.0, 100.0 },
-        { 600.0, 600.0 },
-        { 100.0, 600.0 },
-
-        { 200.0, 400.0 },
-        { 400.0, 400.0 },
-        { 400.0, 200.0 },
-        { 200.0, 200.0 }
-
+    // Build the Mesh
+    _Vertex vertices[8] = {
+        { -1.0, -1.0, -1.0 },
+        { 1.0, -1.0, -1.0 },
+        { 1.0, 1.0, -1.0 },
+        { -1.0, 1.0, -1.0 },
+        { -1.0, -1.0, 1.0 },
+        { 1.0, -1.0, 1.0 },
+        { 1.0, 1.0, 1.0 },
+        { -1.0, 1.0, 1.0 }
     };
-    int ts[N + L + 10][3];
+    int indices[6][4] = {
+        { 0, 1, 2, 3 },
+        { 4, 0, 3, 7 },
+        { 5, 4, 7, 6 },
+        { 1, 5, 6, 2 },
+        { 3, 2, 6, 7 },
+        { 5, 1, 0, 4 }
+    };
+    _Polygon polygons[6];
+    for (int i = 0; i < 6; i++) {
+        polygons[i].indices = indices[i];
+        polygons[i].numIndices = 4;
+        polygons[i].color = BEIGE;
+        polygons[i].triangles = NULL;
+    }
+    _Model model = {
+        vertices,
+        8,
+        polygons,
+        6
+    };
 
-    triangulate_polygon(ncontours, cntr, vertices, ts);
+    // int ncontours = 2;
+    // int cntr[2] = { 5, 5 };
+    // double vertices[1][2] = {
+    //     { 0.0, 0.0 },
 
-    for (int i = 0; i < N + L + 10; i++)
-        printf("triangle #%d: %d %d %d\n", i,
-            ts[i][0], ts[i][1], ts[i][2]);
+    //     { 100.0, 100.0 },
+    //     { 600.0, 100.0 },
+    //     { 600.0, 600.0 },
+    //     { 100.0, 600.0 },
+
+    //     { 200.0, 400.0 },
+    //     { 400.0, 400.0 },
+    //     { 400.0, 200.0 },
+    //     { 200.0, 200.0 }
+
+    // };
+    // int ts[10 + 10][3];
+    // triangulate_polygon(ncontours, cntr, vertices, ts);
 
     // Window setting
     InitWindow(1280, 720, "Prism");
@@ -95,41 +170,6 @@ int main(void)
     camera.up = (Vector3) { 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
 
-    // Build the Mesh
-    // Mesh mesh = GenMeshSphere(3, 6, 9);
-    Mesh mesh = GenMeshCube(2, 2, 2);
-
-    int vl[12][3] = {
-        { 0, 1, 3 }, { 1, 2, 3 },
-        { 4, 0, 5 }, { 0, 3, 5 },
-        { 7, 4, 6 }, { 4, 5, 6 },
-        { 1, 7, 2 }, { 7, 6, 2 },
-        { 5, 3, 6 }, { 3, 2, 6 },
-        { 4, 7, 0 }, { 7, 1, 0 }
-    };
-
-    Triangle triangles[12];
-    for (int i = 0; i < 12; i++) {
-        Vertex a, b, c;
-        a.x = mesh.vertices[vl[i][0] * 3];
-        a.y = mesh.vertices[vl[i][0] * 3 + 1];
-        a.z = mesh.vertices[vl[i][0] * 3 + 2];
-        b.x = mesh.vertices[vl[i][1] * 3];
-        b.y = mesh.vertices[vl[i][1] * 3 + 1];
-        b.z = mesh.vertices[vl[i][1] * 3 + 2];
-        c.x = mesh.vertices[vl[i][2] * 3];
-        c.y = mesh.vertices[vl[i][2] * 3 + 1];
-        c.z = mesh.vertices[vl[i][2] * 3 + 2];
-        triangles[i].a = a;
-        triangles[i].b = b;
-        triangles[i].c = c;
-        triangles[i].color = BEIGE;
-    }
-
-    Triangle* selectedTriangle = NULL;
-
-    Vertex face[5] = { (Vertex) { 0.0, 0.0, 0.0 }, triangles[0].a, triangles[1].a, triangles[1].b, triangles[1].c };
-
     // Update loop
     while (!WindowShouldClose()) {
 
@@ -137,23 +177,6 @@ int main(void)
 
         Vector2 mousePos = GetMousePosition();
         Ray mouseRay = GetMouseRay(mousePos, camera);
-
-        // float closestDistance = MAXFLOAT;
-        // for (int i = 0; i < 12; i++) {
-        //     Triangle triangle = triangles[i];
-        //     RayCollision collision = GetRayCollisionTriangle(mouseRay, triangle.a, triangle.b, triangle.c);
-        //     if (collision.hit) {
-        //         if (collision.distance < closestDistance) {
-        //             closestDistance = collision.distance;
-        //             triangles[i].color = BLUE;
-        //             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        //                 selectedTriangle = triangles + i;
-        //             }
-        //         }
-        //     } else {
-        //         triangles[i].color = BEIGE;
-        //     }
-        // }
 
         BeginDrawing();
 
@@ -163,77 +186,33 @@ int main(void)
 
         BeginMode3D(camera);
 
-        // DrawGrid(10, 1.0f);
+        DrawGrid(10, 1.0f);
 
-        // if (selectedTriangle) {
-        //     selectedTriangle->color = DARKBLUE;
-        //     if (IsKeyDown(KEY_W)) {
-        //         selectedTriangle->a.y += 0.01f;
-        //         selectedTriangle->b.y += 0.01f;
-        //         selectedTriangle->c.y += 0.01f;
-        //     }
-        //     if (IsKeyDown(KEY_S)) {
-        //         selectedTriangle->a.y -= 0.01f;
-        //         selectedTriangle->b.y -= 0.01f;
-        //         selectedTriangle->c.y -= 0.01f;
-        //     }
-        // }
-
-        // for (int i = 0; i < 12; i++) {
-        // Triangle triangle = triangles[i];
-        // DrawTriangle3D(triangle.a, triangle.b, triangle.c, triangle.color);
-        // DrawLine3D(triangle.a, triangle.b, BLACK);
-        // DrawLine3D(triangle.b, triangle.c, BLACK);
-        // DrawLine3D(triangle.a, triangle.c, BLACK);
-        // }
+        for (int i = 2; i < 3; i++) {
+            _TriangulateAndDrawPolygon(model, model.polygons[i], camera);
+        }
 
         EndMode3D();
 
-        // for (int i = 0; i < mesh.vertexCount; i++) {
-        //     Vector3* pos = (Vector3*)(mesh.vertices + 3 * i);
-        //     Vector2 screenPos = GetWorldToScreen(*pos, camera);
+        // for (int i = 0; i < 8; i++) {
+        //     Vector2 screenPos = GetWorldToScreen(vertices[i], camera);
         //     DrawCircle(screenPos.x, screenPos.y, 5, RED);
         // }
 
-        // face[0] = ComputeCenter(face + 1, 4);
-        // Vector2 flatCoords[6];
-        // for (int i = 0; i < 6; i++) {
-        //     flatCoords[i] = GetWorldToScreen(face[i], camera);
-        // }
-        // flatCoords[5] = flatCoords[1];
-        // DrawTriangleFan(flatCoords, 6, WHITE);
-
-        // if (selectedTriangle) {
-        //     Vector2 screenPos = GetWorldToScreen(selectedTriangle->a, camera);
-        //     DrawCircle(screenPos.x, screenPos.y, 5, YELLOW);
-        //     screenPos = GetWorldToScreen(selectedTriangle->b, camera);
-        //     DrawCircle(screenPos.x, screenPos.y, 5, YELLOW);
-        //     screenPos = GetWorldToScreen(selectedTriangle->c, camera);
-        //     DrawCircle(screenPos.x, screenPos.y, 5, YELLOW);
+        // for (int i = 0; i < N + L; i++) {
+        //     double* a = vertices[ts[i][0]];
+        //     double* b = vertices[ts[i][1]];
+        //     double* c = vertices[ts[i][2]];
+        //     DrawTriangle((Vector2) { (float)a[0], (float)a[1] }, (Vector2) { (float)c[0], (float)c[1] }, (Vector2) { (float)b[0], (float)b[1] }, BEIGE);
+        //     DrawLine((int)a[0], (int)a[1], (int)b[0], (int)b[1], BLACK);
+        //     DrawLine((int)a[0], (int)a[1], (int)c[0], (int)c[1], BLACK);
+        //     DrawLine((int)c[0], (int)c[1], (int)b[0], (int)b[1], BLACK);
         // }
 
-        // for (int i = 0; i < mesh.vertexCount; i += 3) {
-        //     Vector3* pos = (Vector3*)(mesh.vertices + i);
-        //     char text[2];
-        //     sprintf(text, "%d", (int)(i / 3));
-        //     DrawText3D(camera, *pos, text, 20, RAYWHITE);
-        // }
-
-        for (int i = 0; i < N + L; i++) {
-            double* a = vertices[ts[i][0]];
-            double* b = vertices[ts[i][1]];
-            double* c = vertices[ts[i][2]];
-            DrawTriangle((Vector2) { (float)a[0], (float)a[1] }, (Vector2) { (float)c[0], (float)c[1] }, (Vector2) { (float)b[0], (float)b[1] }, BEIGE);
-            DrawLine((int)a[0], (int)a[1], (int)b[0], (int)b[1], BLACK);
-            DrawLine((int)a[0], (int)a[1], (int)c[0], (int)c[1], BLACK);
-            DrawLine((int)c[0], (int)c[1], (int)b[0], (int)b[1], BLACK);
-        }
-
-        for (int i = 1; i < N + L + 1; i++) {
-            DrawCircle(vertices[i][0], vertices[i][1], 5, RED);
-            char text[3];
+        for (int i = 0; i < 8; i++) {
+            char text[2];
             sprintf(text, "%d", i);
-            DrawText(text, vertices[i][0], vertices[i][1], 20, RAYWHITE);
+            DrawText3D(camera, vertices[i], text, 20, RAYWHITE);
         }
 
         EndDrawing();
