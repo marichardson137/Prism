@@ -42,31 +42,29 @@ void _TriangulateAndDrawPolygon(_Model model, _Polygon polygon, Camera camera)
     _Vertex v2 = model.vertices[polygon.indices[1]];
     _Vertex v3 = model.vertices[polygon.indices[2]];
 
-    printf("Stage1\n");
-
     Vector3 edge1 = Vector3Subtract(v2, v1);
     Vector3 edge2 = Vector3Subtract(v3, v1);
-    Vector3 normal = Vector3CrossProduct(edge1, edge2);
+    Vector3 normal = Vector3CrossProduct(edge2, edge1);
     normal = Vector3Normalize(normal);
 
-    printf("Stage2\n");
+    Vector3 center = Vector3Lerp(v1, v3, 0.5);
+    Ray ray = { center, normal };
+    DrawSphere(center, 0.2f, RED);
+    DrawRay(ray, GREEN);
 
     // Create a rotation matrix to align the normal with the z-axis
-    Vector3 up = { 0.0f, 0.0f, 1.0f };
+    Vector3 up
+        = { 0.0f, 0.0f, 1.0f };
     Vector3 rotationAxis = Vector3CrossProduct(normal, up);
     float angle = acosf(Vector3DotProduct(normal, up));
     Matrix rotationMatrix = MatrixRotate(rotationAxis, angle);
 
-    printf("Stage3\n");
-
     Vector2 vertices2D[polygon.numIndices];
-
-    printf("Stage4\n");
 
     // Project each vertex onto the 2D plane
     for (int i = 0; i < polygon.numIndices; i++) {
         _Vertex v = model.vertices[polygon.indices[i]];
-        printf("%d -> %d -> %.1f %.1f %.1f\n", i, polygon.indices[i], v.x, v.y, v.z);
+        // printf("%d -> %d -> %.1f %.1f %.1f\n", i, polygon.indices[i], v.x, v.y, v.z);
         DrawSphere(v, 0.2f, BLUE);
         // Rotate the vertex to align the polygon's plane with the z-axis
         Vector3 rotatedVertex = Vector3Transform(v, rotationMatrix);
@@ -74,34 +72,27 @@ void _TriangulateAndDrawPolygon(_Model model, _Polygon polygon, Camera camera)
         vertices2D[i] = (Vector2) { rotatedVertex.x, rotatedVertex.y };
     }
 
-    printf("Stage5\n");
-
     double vertices[polygon.numIndices + 1][2];
     for (int i = 0; i < polygon.numIndices; i++) {
         Vector2 screenPos = vertices2D[i];
         vertices[i + 1][0] = screenPos.x;
         vertices[i + 1][1] = screenPos.y;
-        printf("%d -> %.1f %.1f\n", i, screenPos.x, screenPos.y);
     }
     int triangles[polygon.numIndices][3];
     memset(triangles, 0, sizeof(triangles));
     int cntr[1] = { polygon.numIndices };
 
-    printf("Stage6\n");
+    // triangulate_polygon(1, cntr, vertices, triangles);
 
-    triangulate_polygon(1, cntr, vertices, triangles);
-
-    printf("Stage7\n");
-
-    for (int i = 0; i < polygon.numIndices; i++) {
-        if (triangles[i][0] == 0) {
-            break;
-        }
-        _Vertex v1 = model.vertices[polygon.indices[triangles[i][0] - 1]];
-        _Vertex v2 = model.vertices[polygon.indices[triangles[i][1] - 1]];
-        _Vertex v3 = model.vertices[polygon.indices[triangles[i][2] - 1]];
-        DrawTriangle3D(v1, v3, v2, polygon.color);
-    };
+    // for (int i = 0; i < polygon.numIndices; i++) {
+    //     if (triangles[i][0] == 0) {
+    //         break;
+    //     }
+    //     _Vertex v1 = model.vertices[polygon.indices[triangles[i][0] - 1]];
+    //     _Vertex v2 = model.vertices[polygon.indices[triangles[i][1] - 1]];
+    //     _Vertex v3 = model.vertices[polygon.indices[triangles[i][2] - 1]];
+    //     DrawTriangle3D(v1, v3, v2, polygon.color);
+    // };
 }
 
 int main(void)
@@ -188,7 +179,7 @@ int main(void)
 
         DrawGrid(10, 1.0f);
 
-        for (int i = 2; i < 3; i++) {
+        for (int i = 0; i < 6; i++) {
             _TriangulateAndDrawPolygon(model, model.polygons[i], camera);
         }
 
