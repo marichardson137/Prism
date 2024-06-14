@@ -111,6 +111,33 @@ int main(void)
             }
         }
 
+        if (selection.sPoly) {
+            if (IsKeyPressed(KEY_R)) {
+                selection.sPoly->color = BEIGE;
+                selection.sPoly = NULL;
+            }
+            if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_DOWN)) {
+                float extrudeSpeed = 0.05f;
+                if (IsKeyDown(KEY_DOWN))
+                    extrudeSpeed *= -1.0f;
+                _Polygon p = *selection.sPoly;
+                _Vertex v1 = model.vertices[p.indices[0]];
+                _Vertex v2 = model.vertices[p.indices[1]];
+                _Vertex v3 = model.vertices[p.indices[2]];
+
+                Vector3 edge1 = Vector3Subtract(v2, v1);
+                Vector3 edge2 = Vector3Subtract(v3, v1);
+                Vector3 normal = Vector3CrossProduct(edge2, edge1);
+                normal = Vector3Normalize(normal);
+                normal = Vector3Scale(normal, extrudeSpeed);
+                for (int i = 0; i < p.numIndices; i++) {
+                    model.vertices[p.indices[i]].x += normal.x;
+                    model.vertices[p.indices[i]].y += normal.y;
+                    model.vertices[p.indices[i]].z += normal.z;
+                }
+            }
+        }
+
         BeginDrawing();
 
         DrawFPS(10, 10);
@@ -120,31 +147,6 @@ int main(void)
         BeginMode3D(camera);
 
         DrawGrid(10, 1.0f);
-
-        // if (IsKeyDown(KEY_W)) {
-        //     _Polygon p = model.polygons[selectedPolygon];
-        //     for (int i = 0; i < p.numIndices; i++) {
-        //         model.vertices[p.indices[i]].y += 0.05f;
-        //     }
-        // }
-
-        // if (IsKeyDown(KEY_N)) {
-        //     _Polygon p = model.polygons[selectedPolygon];
-        //     _Vertex v1 = model.vertices[p.indices[0]];
-        //     _Vertex v2 = model.vertices[p.indices[1]];
-        //     _Vertex v3 = model.vertices[p.indices[2]];
-
-        //     Vector3 edge1 = Vector3Subtract(v2, v1);
-        //     Vector3 edge2 = Vector3Subtract(v3, v1);
-        //     Vector3 normal = Vector3CrossProduct(edge2, edge1);
-        //     normal = Vector3Normalize(normal);
-        //     normal = Vector3Scale(normal, 0.05f);
-        //     for (int i = 0; i < p.numIndices; i++) {
-        //         model.vertices[p.indices[i]].x += normal.x;
-        //         model.vertices[p.indices[i]].y += normal.y;
-        //         model.vertices[p.indices[i]].z += normal.z;
-        //     }
-        // }
 
         for (int i = 0; i < 6; i++) {
             _DrawPolygon(model, model.polygons + i);
