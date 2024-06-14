@@ -16,6 +16,7 @@ typedef struct {
 typedef struct {
     _Vertex* vertices;
     int numVertices;
+    Color* vertexColors;
     _Polygon* polygons;
     int numPolygons;
 } _Model;

@@ -5,18 +5,34 @@
 #include "raylib.h"
 #include "raymath.h"
 
+#define STB_DS_IMPLEMENTATION
+#include "stb_ds.h"
+
 #include "geometry.h"
 #include "rendering.h"
 #include "camera.h"
 
 #define MOUSE_ROTATION_SCALE_FACTOR 0.003f
 
+typedef enum {
+    POLYGON_SELECTION = 0,
+    VERTEX_SELECTION
+} SelectionMode;
+
 typedef struct {
+    int mode;
     _Polygon* hPoly;
     _Polygon* sPoly;
     _Vertex* hVertex;
-    _Vertex* sVertex;
+    int* sVertices;
 } Selection;
+
+void _DrawVertices(_Vertex* vertices, int numVertices, float size, Color color)
+{
+    for (int i = 0; i < numVertices; i++) {
+        DrawSphere(vertices[i], size, color);
+    }
+}
 
 int main(void)
 {
@@ -37,8 +53,8 @@ int main(void)
         { 4, 0, 3, 7 },
         { 5, 4, 7, 6 },
         { 1, 5, 6, 2 },
-        { 3, 2, 6, 7 },
-        { 4, 5, 1, 0 }
+        { 3, 2, 6, 7 }, // TOP
+        { 4, 5, 1, 0 } // BOTTOM
     };
     _Polygon polygons[6];
     for (int i = 0; i < 6; i++) {
@@ -48,11 +64,19 @@ int main(void)
         polygons[i].triangles = NULL;
     }
     _Model model = {
-        vertices,
+        NULL,
         8,
+        NULL,
         polygons,
         6
     };
+
+    for (int i = 0; i < model.numVertices; i++) {
+        arrput(model.vertices, vertices[i]);
+        arrput(model.vertexColors, WHITE);
+    }
+
+    _Vertex* renderVertices = NULL;
 
     // Window setting
     InitWindow(1280, 720, "Prism");
@@ -65,13 +89,28 @@ int main(void)
     camera.up = (Vector3) { 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
 
-    Selection selection = { NULL, NULL, NULL, NULL };
+    Selection selection = { POLYGON_SELECTION, NULL, NULL, NULL, NULL };
 
     // Update loop
     while (!WindowShouldClose()) {
 
+        if (IsKeyPressed(KEY_TAB)) {
+            if (selection.mode == POLYGON_SELECTION) {
+                selection.mode = VERTEX_SELECTION;
+                selection.sPoly = NULL;
+                selection.hPoly = NULL;
+            } else if (selection.mode == VERTEX_SELECTION) {
+                selection.mode = POLYGON_SELECTION;
+                selection.hVertex = NULL;
+                arrfree(selection.sVertices);
+                for (int i = 0; i < model.numVertices; i++) {
+                    model.vertexColors[i] = WHITE;
+                }
+            }
+        }
+
         // UpdateCamera(&camera, CAMERA_ORBITAL);
-        if (IsKeyDown(KEY_LEFT_SHIFT) || IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+        if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
             Vector2 mousePositionDelta = GetMouseDelta();
             _CameraYaw(&camera, -mousePositionDelta.x * MOUSE_ROTATION_SCALE_FACTOR, true);
             _CameraPitch(&camera, -mousePositionDelta.y * MOUSE_ROTATION_SCALE_FACTOR, true, true, false);
@@ -81,60 +120,113 @@ int main(void)
         Vector2 mousePos = GetMousePosition();
         Ray mouseRay = GetMouseRay(mousePos, camera);
 
-        selection.hPoly = NULL;
-        float closestDistance = MAXFLOAT;
-        for (int i = 0; i < 6; i++) {
-            _Polygon* polygon = model.polygons + i;
-            _TriangulatePolygon(model, polygon);
-            for (int i = 0; i < polygon->numIndices; i++) {
-                if (polygon->triangles[i][0] == 0) {
-                    break;
+        for (int i = 0; i < model.numPolygons; i++) {
+            model.polygons[i].color = BEIGE;
+        }
+
+        if (selection.mode == POLYGON_SELECTION) {
+
+            // Raycasting
+            selection.hPoly = NULL;
+            float closestDistance = MAXFLOAT;
+            for (int i = 0; i < model.numPolygons; i++) {
+                _Polygon* polygon = model.polygons + i;
+                _TriangulatePolygon(model, polygon);
+                for (int i = 0; i < polygon->numIndices; i++) {
+                    if (polygon->triangles[i][0] == 0) {
+                        break;
+                    }
+                    _Vertex v1 = model.vertices[polygon->indices[polygon->triangles[i][0] - 1]];
+                    _Vertex v2 = model.vertices[polygon->indices[polygon->triangles[i][1] - 1]];
+                    _Vertex v3 = model.vertices[polygon->indices[polygon->triangles[i][2] - 1]];
+                    RayCollision rc = GetRayCollisionTriangle(mouseRay, v1, v2, v3);
+                    if (rc.hit && rc.distance < closestDistance) {
+                        closestDistance = rc.distance;
+                        selection.hPoly = polygon;
+                        break;
+                    }
                 }
-                _Vertex v1 = model.vertices[polygon->indices[polygon->triangles[i][0] - 1]];
-                _Vertex v2 = model.vertices[polygon->indices[polygon->triangles[i][1] - 1]];
-                _Vertex v3 = model.vertices[polygon->indices[polygon->triangles[i][2] - 1]];
-                RayCollision rc = GetRayCollisionTriangle(mouseRay, v1, v2, v3);
+            }
+
+            // Coloring
+            if (selection.sPoly)
+                selection.sPoly->color = DARKBLUE;
+            if (selection.hPoly) {
+                selection.hPoly->color = BLUE;
+                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                    selection.sPoly = selection.hPoly;
+                }
+            }
+
+            // Movement
+            if (selection.sPoly) {
+                if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_DOWN)) {
+                    float extrudeSpeed = 0.05f;
+                    if (IsKeyDown(KEY_DOWN))
+                        extrudeSpeed *= -1.0f;
+                    _Polygon p = *selection.sPoly;
+                    _Vertex v1 = model.vertices[p.indices[0]];
+                    _Vertex v2 = model.vertices[p.indices[1]];
+                    _Vertex v3 = model.vertices[p.indices[2]];
+
+                    Vector3 edge1 = Vector3Subtract(v2, v1);
+                    Vector3 edge2 = Vector3Subtract(v3, v1);
+                    Vector3 normal = Vector3CrossProduct(edge2, edge1);
+                    normal = Vector3Normalize(normal);
+                    normal = Vector3Scale(normal, extrudeSpeed);
+                    for (int i = 0; i < p.numIndices; i++) {
+                        model.vertices[p.indices[i]].x += normal.x;
+                        model.vertices[p.indices[i]].y += normal.y;
+                        model.vertices[p.indices[i]].z += normal.z;
+                    }
+                }
+            }
+        }
+
+        if (selection.mode == VERTEX_SELECTION) {
+
+            // Raycasting
+            float closestDistance = MAXFLOAT;
+            for (int i = 0; i < model.numVertices; i++) {
+                RayCollision rc = GetRayCollisionSphere(mouseRay, model.vertices[i], 0.075f);
                 if (rc.hit && rc.distance < closestDistance) {
                     closestDistance = rc.distance;
-                    selection.hPoly = polygon;
+                    selection.hVertex = model.vertices + i;
+                    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                        if (!IsKeyDown(KEY_LEFT_SHIFT)) {
+                            arrfree(selection.sVertices);
+                            for (int i = 0; i < model.numVertices; i++) {
+                                model.vertexColors[i] = WHITE;
+                            }
+                        }
+                        arrput(selection.sVertices, i);
+                        model.vertexColors[i] = DARKBLUE;
+                    }
+                }
+                arrput(renderVertices, model.vertices[i]);
+            }
+
+            // Movement
+            if (arrlen(selection.sVertices) > 0) {
+                if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_DOWN)) {
+                    float extrudeSpeed = 0.05f;
+                    if (IsKeyDown(KEY_DOWN))
+                        extrudeSpeed *= -1.0f;
+                    for (int i = 0; i < arrlen(selection.sVertices); i++) {
+                        model.vertices[selection.sVertices[i]].y += extrudeSpeed;
+                    }
                 }
             }
-            polygon->color = BEIGE;
         }
 
-        if (selection.sPoly)
-            selection.sPoly->color = DARKBLUE;
-        if (selection.hPoly) {
-            selection.hPoly->color = BLUE;
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                selection.sPoly = selection.hPoly;
-            }
-        }
-
-        if (selection.sPoly) {
-            if (IsKeyPressed(KEY_R)) {
-                selection.sPoly->color = BEIGE;
-                selection.sPoly = NULL;
-            }
-            if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_DOWN)) {
-                float extrudeSpeed = 0.05f;
-                if (IsKeyDown(KEY_DOWN))
-                    extrudeSpeed *= -1.0f;
-                _Polygon p = *selection.sPoly;
-                _Vertex v1 = model.vertices[p.indices[0]];
-                _Vertex v2 = model.vertices[p.indices[1]];
-                _Vertex v3 = model.vertices[p.indices[2]];
-
-                Vector3 edge1 = Vector3Subtract(v2, v1);
-                Vector3 edge2 = Vector3Subtract(v3, v1);
-                Vector3 normal = Vector3CrossProduct(edge2, edge1);
-                normal = Vector3Normalize(normal);
-                normal = Vector3Scale(normal, extrudeSpeed);
-                for (int i = 0; i < p.numIndices; i++) {
-                    model.vertices[p.indices[i]].x += normal.x;
-                    model.vertices[p.indices[i]].y += normal.y;
-                    model.vertices[p.indices[i]].z += normal.z;
-                }
+        // RESET
+        if (IsKeyPressed(KEY_R)) {
+            selection.hPoly = NULL;
+            selection.sPoly = NULL;
+            selection.hVertex = NULL;
+            arrfree(selection.sVertices);
+            for (int i = 0; i < model.numVertices; i++) {
+                model.vertexColors[i] = WHITE;
             }
         }
 
@@ -148,14 +240,13 @@ int main(void)
 
         DrawGrid(10, 1.0f);
 
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < model.numPolygons; i++) {
             _DrawPolygon(model, model.polygons + i);
         }
 
-        if (selection.sPoly) {
-            for (int i = 0; i < selection.sPoly->numIndices; i++) {
-                DrawSphere(model.vertices[selection.sPoly->indices[i]], 0.05f, WHITE);
-            }
+        // _DrawVertices(renderVertices, arrlen(renderVertices), 0.05f, WHITE);
+        for (int i = 0; i < arrlen(renderVertices); i++) {
+            DrawSphere(renderVertices[i], 0.05f, model.vertexColors[i]);
         }
 
         EndMode3D();
@@ -163,13 +254,16 @@ int main(void)
         // for (int i = 0; i < 8; i++) {
         //     char text[2];
         //     sprintf(text, "%d", i);
-        //     DrawText3D(camera, vertices[i], text, 20, RAYWHITE);
-        //     Vector2 screenPos = GetWorldToScreen(vertices[i], camera);
-        //     DrawCircle(screenPos.x, screenPos.y, 5, BLUE);
+        //     DrawText3D(camera, model.vertices[i], text, 20, RAYWHITE);
         // }
 
         EndDrawing();
+
+        arrfree(renderVertices);
     }
+
+    arrfree(model.vertices);
+    arrfree(model.vertexColors);
 
     CloseWindow();
 
