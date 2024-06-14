@@ -23,7 +23,7 @@ typedef struct {
     int mode;
     _Polygon* hPoly;
     _Polygon* sPoly;
-    _Vertex* hVertex;
+    int hVertex;
     int* sVertices;
 } Selection;
 
@@ -89,7 +89,7 @@ int main(void)
     camera.up = (Vector3) { 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
 
-    Selection selection = { POLYGON_SELECTION, NULL, NULL, NULL, NULL };
+    Selection selection = { POLYGON_SELECTION, NULL, NULL, -1, NULL };
 
     // Update loop
     while (!WindowShouldClose()) {
@@ -101,7 +101,7 @@ int main(void)
                 selection.hPoly = NULL;
             } else if (selection.mode == VERTEX_SELECTION) {
                 selection.mode = POLYGON_SELECTION;
-                selection.hVertex = NULL;
+                selection.hVertex = -1;
                 arrfree(selection.sVertices);
                 for (int i = 0; i < model.numVertices; i++) {
                     model.vertexColors[i] = WHITE;
@@ -122,6 +122,10 @@ int main(void)
 
         for (int i = 0; i < model.numPolygons; i++) {
             model.polygons[i].color = BEIGE;
+        }
+
+        for (int i = 0; i < model.numVertices; i++) {
+            model.vertexColors[i] = WHITE;
         }
 
         if (selection.mode == POLYGON_SELECTION) {
@@ -185,25 +189,31 @@ int main(void)
 
         if (selection.mode == VERTEX_SELECTION) {
 
+            selection.hVertex = -1;
+
             // Raycasting
             float closestDistance = MAXFLOAT;
             for (int i = 0; i < model.numVertices; i++) {
                 RayCollision rc = GetRayCollisionSphere(mouseRay, model.vertices[i], 0.075f);
                 if (rc.hit && rc.distance < closestDistance) {
                     closestDistance = rc.distance;
-                    selection.hVertex = model.vertices + i;
+                    selection.hVertex = i;
                     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                         if (!IsKeyDown(KEY_LEFT_SHIFT)) {
                             arrfree(selection.sVertices);
-                            for (int i = 0; i < model.numVertices; i++) {
-                                model.vertexColors[i] = WHITE;
-                            }
                         }
                         arrput(selection.sVertices, i);
-                        model.vertexColors[i] = DARKBLUE;
                     }
                 }
                 arrput(renderVertices, model.vertices[i]);
+            }
+
+            // Coloring
+            for (int i = 0; i < arrlen(selection.sVertices); i++) {
+                model.vertexColors[selection.sVertices[i]] = DARKBLUE;
+            }
+            if (selection.hVertex != -1) {
+                model.vertexColors[selection.hVertex] = BLUE;
             }
 
             // Movement
@@ -223,7 +233,7 @@ int main(void)
         if (IsKeyPressed(KEY_R)) {
             selection.hPoly = NULL;
             selection.sPoly = NULL;
-            selection.hVertex = NULL;
+            selection.hVertex = -1;
             arrfree(selection.sVertices);
             for (int i = 0; i < model.numVertices; i++) {
                 model.vertexColors[i] = WHITE;
