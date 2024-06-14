@@ -9,6 +9,15 @@
 #include "rendering.h"
 #include "camera.h"
 
+#define MOUSE_ROTATION_SCALE_FACTOR 0.003f
+
+typedef struct {
+    _Polygon* hPoly;
+    _Polygon* sPoly;
+    _Vertex* hVertex;
+    _Vertex* sVertex;
+} Selection;
+
 int main(void)
 {
 
@@ -56,7 +65,7 @@ int main(void)
     camera.up = (Vector3) { 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
 
-    int selectedPolygon = 0;
+    Selection selection = { NULL, NULL, NULL, NULL };
 
     // Update loop
     while (!WindowShouldClose()) {
@@ -64,110 +73,98 @@ int main(void)
         // UpdateCamera(&camera, CAMERA_ORBITAL);
         if (IsKeyDown(KEY_LEFT_SHIFT) || IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
             Vector2 mousePositionDelta = GetMouseDelta();
-            _CameraYaw(&camera, -mousePositionDelta.x * 0.003f, true);
-            _CameraPitch(&camera, -mousePositionDelta.y * 0.003f, true, true, false);
+            _CameraYaw(&camera, -mousePositionDelta.x * MOUSE_ROTATION_SCALE_FACTOR, true);
+            _CameraPitch(&camera, -mousePositionDelta.y * MOUSE_ROTATION_SCALE_FACTOR, true, true, false);
         }
         _CameraMoveToTarget(&camera, -GetMouseWheelMove());
 
         Vector2 mousePos = GetMousePosition();
         Ray mouseRay = GetMouseRay(mousePos, camera);
 
+        selection.hPoly = NULL;
+        float closestDistance = MAXFLOAT;
+        for (int i = 0; i < 6; i++) {
+            _Polygon* polygon = model.polygons + i;
+            _TriangulatePolygon(model, polygon);
+            for (int i = 0; i < polygon->numIndices; i++) {
+                if (polygon->triangles[i][0] == 0) {
+                    break;
+                }
+                _Vertex v1 = model.vertices[polygon->indices[polygon->triangles[i][0] - 1]];
+                _Vertex v2 = model.vertices[polygon->indices[polygon->triangles[i][1] - 1]];
+                _Vertex v3 = model.vertices[polygon->indices[polygon->triangles[i][2] - 1]];
+                RayCollision rc = GetRayCollisionTriangle(mouseRay, v1, v2, v3);
+                if (rc.hit && rc.distance < closestDistance) {
+                    closestDistance = rc.distance;
+                    selection.hPoly = polygon;
+                }
+            }
+            polygon->color = BEIGE;
+        }
+
+        if (selection.sPoly)
+            selection.sPoly->color = DARKBLUE;
+        if (selection.hPoly) {
+            selection.hPoly->color = BLUE;
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                selection.sPoly = selection.hPoly;
+            }
+        }
+
         BeginDrawing();
 
         DrawFPS(10, 10);
 
-        ClearBackground(BLACK);
+        ClearBackground((Color) { 15, 15, 15, 255 });
 
         BeginMode3D(camera);
 
         DrawGrid(10, 1.0f);
 
-        if (IsKeyPressed(KEY_ZERO)) {
-            model.polygons[selectedPolygon].color = BEIGE;
-            selectedPolygon = 0;
-            model.polygons[selectedPolygon].color = GREEN;
-        } else if (IsKeyPressed(KEY_ONE)) {
-            model.polygons[selectedPolygon].color = BEIGE;
-            selectedPolygon = 1;
-            model.polygons[selectedPolygon].color = GREEN;
-        } else if (IsKeyPressed(KEY_TWO)) {
-            model.polygons[selectedPolygon].color = BEIGE;
-            selectedPolygon = 2;
-            model.polygons[selectedPolygon].color = GREEN;
-        } else if (IsKeyPressed(KEY_THREE)) {
-            model.polygons[selectedPolygon].color = BEIGE;
-            selectedPolygon = 3;
-            model.polygons[selectedPolygon].color = GREEN;
-        } else if (IsKeyPressed(KEY_FOUR)) {
-            model.polygons[selectedPolygon].color = BEIGE;
-            selectedPolygon = 4;
-            model.polygons[selectedPolygon].color = GREEN;
-        } else if (IsKeyPressed(KEY_FIVE)) {
-            model.polygons[selectedPolygon].color = BEIGE;
-            selectedPolygon = 5;
-            model.polygons[selectedPolygon].color = GREEN;
-        }
+        // if (IsKeyDown(KEY_W)) {
+        //     _Polygon p = model.polygons[selectedPolygon];
+        //     for (int i = 0; i < p.numIndices; i++) {
+        //         model.vertices[p.indices[i]].y += 0.05f;
+        //     }
+        // }
 
-        if (IsKeyDown(KEY_W)) {
-            _Polygon p = model.polygons[selectedPolygon];
-            for (int i = 0; i < p.numIndices; i++) {
-                model.vertices[p.indices[i]].y += 0.05f;
-            }
-        }
-        if (IsKeyDown(KEY_S)) {
-            _Polygon p = model.polygons[selectedPolygon];
-            for (int i = 0; i < p.numIndices; i++) {
-                model.vertices[p.indices[i]].y -= 0.05f;
-            }
-        }
-        if (IsKeyDown(KEY_N)) {
-            _Polygon p = model.polygons[selectedPolygon];
-            _Vertex v1 = model.vertices[p.indices[0]];
-            _Vertex v2 = model.vertices[p.indices[1]];
-            _Vertex v3 = model.vertices[p.indices[2]];
+        // if (IsKeyDown(KEY_N)) {
+        //     _Polygon p = model.polygons[selectedPolygon];
+        //     _Vertex v1 = model.vertices[p.indices[0]];
+        //     _Vertex v2 = model.vertices[p.indices[1]];
+        //     _Vertex v3 = model.vertices[p.indices[2]];
 
-            Vector3 edge1 = Vector3Subtract(v2, v1);
-            Vector3 edge2 = Vector3Subtract(v3, v1);
-            Vector3 normal = Vector3CrossProduct(edge2, edge1);
-            normal = Vector3Normalize(normal);
-            normal = Vector3Scale(normal, 0.05f);
-            for (int i = 0; i < p.numIndices; i++) {
-                model.vertices[p.indices[i]].x += normal.x;
-                model.vertices[p.indices[i]].y += normal.y;
-                model.vertices[p.indices[i]].z += normal.z;
-            }
-        }
-        if (IsKeyDown(KEY_M)) {
-            _Polygon p = model.polygons[selectedPolygon];
-            _Vertex v1 = model.vertices[p.indices[0]];
-            _Vertex v2 = model.vertices[p.indices[1]];
-            _Vertex v3 = model.vertices[p.indices[2]];
-
-            Vector3 edge1 = Vector3Subtract(v2, v1);
-            Vector3 edge2 = Vector3Subtract(v3, v1);
-            Vector3 normal = Vector3CrossProduct(edge2, edge1);
-            normal = Vector3Normalize(normal);
-            normal = Vector3Scale(normal, 0.05f);
-            for (int i = 0; i < p.numIndices; i++) {
-                model.vertices[p.indices[i]].x -= normal.x;
-                model.vertices[p.indices[i]].y -= normal.y;
-                model.vertices[p.indices[i]].z -= normal.z;
-            }
-        }
+        //     Vector3 edge1 = Vector3Subtract(v2, v1);
+        //     Vector3 edge2 = Vector3Subtract(v3, v1);
+        //     Vector3 normal = Vector3CrossProduct(edge2, edge1);
+        //     normal = Vector3Normalize(normal);
+        //     normal = Vector3Scale(normal, 0.05f);
+        //     for (int i = 0; i < p.numIndices; i++) {
+        //         model.vertices[p.indices[i]].x += normal.x;
+        //         model.vertices[p.indices[i]].y += normal.y;
+        //         model.vertices[p.indices[i]].z += normal.z;
+        //     }
+        // }
 
         for (int i = 0; i < 6; i++) {
-            _TriangulateAndDrawPolygon(model, model.polygons[i]);
+            _DrawPolygon(model, model.polygons + i);
+        }
+
+        if (selection.sPoly) {
+            for (int i = 0; i < selection.sPoly->numIndices; i++) {
+                DrawSphere(model.vertices[selection.sPoly->indices[i]], 0.05f, WHITE);
+            }
         }
 
         EndMode3D();
 
-        for (int i = 0; i < 8; i++) {
-            char text[2];
-            sprintf(text, "%d", i);
-            DrawText3D(camera, vertices[i], text, 20, RAYWHITE);
-            Vector2 screenPos = GetWorldToScreen(vertices[i], camera);
-            DrawCircle(screenPos.x, screenPos.y, 5, BLUE);
-        }
+        // for (int i = 0; i < 8; i++) {
+        //     char text[2];
+        //     sprintf(text, "%d", i);
+        //     DrawText3D(camera, vertices[i], text, 20, RAYWHITE);
+        //     Vector2 screenPos = GetWorldToScreen(vertices[i], camera);
+        //     DrawCircle(screenPos.x, screenPos.y, 5, BLUE);
+        // }
 
         EndDrawing();
     }

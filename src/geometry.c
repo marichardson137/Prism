@@ -1,15 +1,16 @@
 #include <string.h>
+#include <stdio.h>
 
 #include "geometry.h"
 #include "interface.h"
 
-void _TriangulateAndDrawPolygon(_Model model, _Polygon polygon)
+void _TriangulatePolygon(_Model model, _Polygon* polygon)
 {
     // Translate to 2D...
     // Find the normal of the polygon's plane
-    _Vertex v1 = model.vertices[polygon.indices[0]];
-    _Vertex v2 = model.vertices[polygon.indices[1]];
-    _Vertex v3 = model.vertices[polygon.indices[2]];
+    _Vertex v1 = model.vertices[polygon->indices[0]];
+    _Vertex v2 = model.vertices[polygon->indices[1]];
+    _Vertex v3 = model.vertices[polygon->indices[2]];
 
     Vector3 edge1 = Vector3Subtract(v2, v1);
     Vector3 edge2 = Vector3Subtract(v3, v1);
@@ -27,39 +28,41 @@ void _TriangulateAndDrawPolygon(_Model model, _Polygon polygon)
         rotationMatrix = MatrixRotate(rotationAxis, angle);
     }
 
-    Vector2 vertices2D[polygon.numIndices];
+    Vector2 vertices2D[polygon->numIndices];
 
     // Project each vertex onto the 2D plane
-    for (int i = 0; i < polygon.numIndices; i++) {
-        _Vertex v = model.vertices[polygon.indices[i]];
+    for (int i = 0; i < polygon->numIndices; i++) {
+        _Vertex v = model.vertices[polygon->indices[i]];
         // Rotate the vertex to align the polygon's plane with the z-axis
         Vector3 rotatedVertex = Vector3Transform(v, rotationMatrix);
         // Drop the z-coordinate
         vertices2D[i] = (Vector2) { rotatedVertex.x, rotatedVertex.z };
     }
 
-    double vertices[polygon.numIndices + 1][2];
-    for (int i = 0; i < polygon.numIndices; i++) {
+    double vertices[polygon->numIndices + 1][2];
+    for (int i = 0; i < polygon->numIndices; i++) {
         Vector2 screenPos = vertices2D[i];
         vertices[i + 1][0] = screenPos.x;
         vertices[i + 1][1] = screenPos.y;
     }
-    int triangles[polygon.numIndices][3];
-    memset(triangles, 0, sizeof(triangles));
-    int cntr[1] = { polygon.numIndices };
+    if (!polygon->triangles)
+        polygon->triangles = MemAlloc(sizeof(int) * polygon->numIndices * 3);
+    int cntr[1] = { polygon->numIndices };
+    triangulate_polygon(1, cntr, vertices, polygon->triangles);
+}
 
-    triangulate_polygon(1, cntr, vertices, triangles);
-
-    for (int i = 0; i < polygon.numIndices; i++) {
-        if (triangles[i][0] == 0) {
+void _DrawPolygon(_Model model, _Polygon* polygon)
+{
+    for (int i = 0; i < polygon->numIndices; i++) {
+        if (polygon->triangles[i][0] == 0) {
             break;
         }
-        _Vertex v1 = model.vertices[polygon.indices[triangles[i][0] - 1]];
-        _Vertex v2 = model.vertices[polygon.indices[triangles[i][1] - 1]];
-        _Vertex v3 = model.vertices[polygon.indices[triangles[i][2] - 1]];
-        DrawTriangle3D(v1, v3, v2, polygon.color);
-        DrawLine3D(v1, v2, BLACK);
-        DrawLine3D(v1, v3, BLACK);
-        DrawLine3D(v3, v2, BLACK);
+        _Vertex v1 = model.vertices[polygon->indices[polygon->triangles[i][0] - 1]];
+        _Vertex v2 = model.vertices[polygon->indices[polygon->triangles[i][1] - 1]];
+        _Vertex v3 = model.vertices[polygon->indices[polygon->triangles[i][2] - 1]];
+        DrawTriangle3D(v1, v3, v2, polygon->color);
+        DrawLine3D(v1, v2, WHITE);
+        DrawLine3D(v1, v3, WHITE);
+        DrawLine3D(v3, v2, WHITE);
     };
 }

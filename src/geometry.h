@@ -20,6 +20,7 @@ typedef struct {
     int numPolygons;
 } _Model;
 
-void _TriangulateAndDrawPolygon(_Model model, _Polygon polygon);
+void _TriangulatePolygon(_Model model, _Polygon* polygon);
+void _DrawPolygon(_Model model, _Polygon* polygon);
 
 #endif
