@@ -7,8 +7,8 @@
 typedef Vector3 _Vertex;
 
 typedef struct {
-    int* indices;
-    int numIndices;
+    int* indices;           // Vertex references
+    int numIndices; 
     int (*triangles)[3];
     Color color;
 } _Polygon;

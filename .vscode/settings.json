@@ -5,6 +5,9 @@
         "string.h": "c",
         "math.h": "c",
         "stdlib.h": "c",
-        "float.h": "c"
+        "float.h": "c",
+        "rendering.h": "c",
+        "geometry.h": "c",
+        "selection.h": "c"
     }
 }

@@ -45,8 +45,8 @@ void _TriangulatePolygon(_Model model, _Polygon* polygon)
         vertices[i + 1][0] = screenPos.x;
         vertices[i + 1][1] = screenPos.y;
     }
-    if (!polygon->triangles)
-        polygon->triangles = MemAlloc(sizeof(int) * polygon->numIndices * 3);
+    // TODO:: REALLOC + FREE
+    polygon->triangles = MemRealloc(polygon->triangles, sizeof(int) * polygon->numIndices * 3);
     int cntr[1] = { polygon->numIndices };
     triangulate_polygon(1, cntr, vertices, polygon->triangles);
 }
