@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <float.h>
 
 #include "raylib.h"
 #include "raymath.h"
@@ -132,7 +133,7 @@ int main(void)
 
             // Raycasting
             selection.hPoly = NULL;
-            float closestDistance = MAXFLOAT;
+            float closestDistance = FLT_MAX;
             for (int i = 0; i < model.numPolygons; i++) {
                 _Polygon* polygon = model.polygons + i;
                 _TriangulatePolygon(model, polygon);
@@ -192,7 +193,7 @@ int main(void)
             selection.hVertex = -1;
 
             // Raycasting
-            float closestDistance = MAXFLOAT;
+            float closestDistance = FLT_MAX;
             for (int i = 0; i < model.numVertices; i++) {
                 RayCollision rc = GetRayCollisionSphere(mouseRay, model.vertices[i], 0.075f);
                 if (rc.hit && rc.distance < closestDistance) {

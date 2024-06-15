@@ -1,6 +1,10 @@
 {
     "files.associations": {
         "raymath.h": "c",
-        "raylib.h": "c"
+        "raylib.h": "c",
+        "string.h": "c",
+        "math.h": "c",
+        "stdlib.h": "c",
+        "float.h": "c"
     }
 }
