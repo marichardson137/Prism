@@ -1,3 +1,6 @@
 # VSCode Config
 .vscode
 .vscode/*
+
+# OSX Debug
+*.dSYM
