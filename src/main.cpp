@@ -24,8 +24,8 @@ typedef enum {
 
 typedef struct {
     int mode;
-    _Polygon* hPoly;
-    _Polygon* sPoly;
+    Polygon* hPoly;
+    Polygon* sPoly;
     int hVertex;
     int* sVertices;
 } Selection;
@@ -124,120 +124,120 @@ bool _IsAnElementOf(int* arr, int num)
     return false;
 }
 
-void _SplitPolygons(_Model* model)
-{
-    int staticNumPolygons = model->numPolygons;
-    for (int i = 0; i < staticNumPolygons; i++) { // For each polygon
-        // Map normals
-        _Polygon* polygon = model->polygons + i;
-        if (!polygon->triangles)
-            return;
-        struct {
-            Vector3 key;
-            int* value;
-        }* normals_map = NULL; // Normal (Vector3) --> List of Triangles (int)
-        for (int t = 0; t < polygon->numIndices; t++) { // For each triangle
-            if (polygon->triangles[t][0] == 0)
-                break;
-            _Vertex v1 = model->vertices[polygon->triangles[t][0] - 1];
-            _Vertex v2 = model->vertices[polygon->triangles[t][1] - 1];
-            _Vertex v3 = model->vertices[polygon->triangles[t][2] - 1];
+// void _SplitPolygons(Model* model)
+// {
+//     int staticNumPolygons = model->numPolygons;
+//     for (int i = 0; i < staticNumPolygons; i++) { // For each polygon
+//         // Map normals
+//         _Polygon* polygon = model->polygons + i;
+//         if (!polygon->triangles)
+//             return;
+//         struct {
+//             Vector3 key;
+//             int* value;
+//         }* normals_map = NULL; // Normal (Vector3) --> List of Triangles (int)
+//         for (int t = 0; t < polygon->numIndices; t++) { // For each triangle
+//             if (polygon->triangles[t][0] == 0)
+//                 break;
+//             _Vertex v1 = model->vertices[polygon->triangles[t][0] - 1];
+//             _Vertex v2 = model->vertices[polygon->triangles[t][1] - 1];
+//             _Vertex v3 = model->vertices[polygon->triangles[t][2] - 1];
 
-            Vector3 edge1 = Vector3Subtract(v2, v1);
-            Vector3 edge2 = Vector3Subtract(v3, v1);
-            Vector3 normal = Vector3CrossProduct(edge2, edge1);
-            normal = Vector3Normalize(normal);
-            normal.x = _Sanitize(normal.x);
-            normal.y = _Sanitize(normal.y);
-            normal.z = _Sanitize(normal.z);
-            int* value = hmget(normals_map, normal);
-            arrput(value, t);
-            hmput(normals_map, normal, value); // ???
-        }
+//             Vector3 edge1 = Vector3Subtract(v2, v1);
+//             Vector3 edge2 = Vector3Subtract(v3, v1);
+//             Vector3 normal = Vector3CrossProduct(edge2, edge1);
+//             normal = Vector3Normalize(normal);
+//             normal.x = _Sanitize(normal.x);
+//             normal.y = _Sanitize(normal.y);
+//             normal.z = _Sanitize(normal.z);
+//             int* value = hmget(normals_map, normal);
+//             arrput(value, t);
+//             hmput(normals_map, normal, value); // ???
+//         }
 
-        int* baseIndices = NULL;
-        for (int x = 0; x < polygon->numIndices; x++) {
-            arrput(baseIndices, polygon->indices[x]);
-        }
+//         int* baseIndices = NULL;
+//         for (int x = 0; x < polygon->numIndices; x++) {
+//             arrput(baseIndices, polygon->indices[x]);
+//         }
 
-        // Clear the base polygon
-        arrfree(polygon->indices);
-        polygon->numIndices = 0;
+//         // Clear the base polygon
+//         arrfree(polygon->indices);
+//         polygon->numIndices = 0;
 
-        // printf("BaseIndices ->");
-        // for (int x = 0; x < arrlen(baseIndices); x++) {
-        //     printf(" %d", baseIndices[x]);
-        // }
-        // printf("\n");
+//         // printf("BaseIndices ->");
+//         // for (int x = 0; x < arrlen(baseIndices); x++) {
+//         //     printf(" %d", baseIndices[x]);
+//         // }
+//         // printf("\n");
 
-        for (int n = 0; n < hmlen(normals_map); n++) { // For each normal group
-            Vector3 normal = normals_map[n].key;
-            int* triangleIndices = normals_map[n].value;
-            _Polygon* p;
-            if (n == 0) {
-                p = polygon;
-            } else {
-                printf("CREATING NEW POLY");
-                p->indices = NULL;
-                p->triangles = NULL;
-                p->color = BEIGE;
-                model->numPolygons++;
-            }
-            p->numIndices = 2 + arrlen(triangleIndices);
+//         for (int n = 0; n < hmlen(normals_map); n++) { // For each normal group
+//             Vector3 normal = normals_map[n].key;
+//             int* triangleIndices = normals_map[n].value;
+//             _Polygon* p;
+//             if (n == 0) {
+//                 p = polygon;
+//             } else {
+//                 printf("CREATING NEW POLY");
+//                 p->indices = NULL;
+//                 p->triangles = NULL;
+//                 p->color = BEIGE;
+//                 model->numPolygons++;
+//             }
+//             p->numIndices = 2 + arrlen(triangleIndices);
 
-            int* unique_indices = NULL;
-            for (int v = 0; v < arrlen(triangleIndices); v++) { // For each triangle
-                int tIndex = triangleIndices[v];
-                int vIndex1 = baseIndices[polygon->triangles[tIndex][0] - 1];
-                int vIndex2 = baseIndices[polygon->triangles[tIndex][1] - 1];
-                int vIndex3 = baseIndices[polygon->triangles[tIndex][2] - 1];
-                if (!_IsAnElementOf(unique_indices, vIndex1))
-                    arrput(unique_indices, vIndex1);
-                if (!_IsAnElementOf(unique_indices, vIndex2))
-                    arrput(unique_indices, vIndex2);
-                if (!_IsAnElementOf(unique_indices, vIndex3))
-                    arrput(unique_indices, vIndex3);
-            }
+//             int* unique_indices = NULL;
+//             for (int v = 0; v < arrlen(triangleIndices); v++) { // For each triangle
+//                 int tIndex = triangleIndices[v];
+//                 int vIndex1 = baseIndices[polygon->triangles[tIndex][0] - 1];
+//                 int vIndex2 = baseIndices[polygon->triangles[tIndex][1] - 1];
+//                 int vIndex3 = baseIndices[polygon->triangles[tIndex][2] - 1];
+//                 if (!_IsAnElementOf(unique_indices, vIndex1))
+//                     arrput(unique_indices, vIndex1);
+//                 if (!_IsAnElementOf(unique_indices, vIndex2))
+//                     arrput(unique_indices, vIndex2);
+//                 if (!_IsAnElementOf(unique_indices, vIndex3))
+//                     arrput(unique_indices, vIndex3);
+//             }
 
-            // printf("UniqueIndices ->");
-            // for (int x = 0; x < arrlen(unique_indices); x++) {
-            //     printf(" %d", unique_indices[x]);
-            // }
-            // printf("\n");
+//             // printf("UniqueIndices ->");
+//             // for (int x = 0; x < arrlen(unique_indices); x++) {
+//             //     printf(" %d", unique_indices[x]);
+//             // }
+//             // printf("\n");
 
-            int* finalIndices = NULL;
-            for (int g = 0; g < arrlen(baseIndices); g++) {
-                if (_IsAnElementOf(unique_indices, baseIndices[g])) {
-                    arrput(finalIndices, baseIndices[g]);
-                }
-            }
+//             int* finalIndices = NULL;
+//             for (int g = 0; g < arrlen(baseIndices); g++) {
+//                 if (_IsAnElementOf(unique_indices, baseIndices[g])) {
+//                     arrput(finalIndices, baseIndices[g]);
+//                 }
+//             }
 
-            // printf("FinalIndices ->");
-            // for (int x = 0; x < arrlen(finalIndices); x++) {
-            //     printf(" %d", finalIndices[x]);
-            // }
-            // printf("\n");
-            // printf("\n");
+//             // printf("FinalIndices ->");
+//             // for (int x = 0; x < arrlen(finalIndices); x++) {
+//             //     printf(" %d", finalIndices[x]);
+//             // }
+//             // printf("\n");
+//             // printf("\n");
 
-            p->indices = finalIndices;
+//             p->indices = finalIndices;
 
-            if (n != 0)
-                arrput(model->polygons, *p);
+//             if (n != 0)
+//                 arrput(model->polygons, *p);
 
-            arrfree(triangleIndices);
-            arrfree(unique_indices);
-        }
+//             arrfree(triangleIndices);
+//             arrfree(unique_indices);
+//         }
 
-        arrfree(baseIndices);
-        hmfree(normals_map);
-    }
-}
+//         arrfree(baseIndices);
+//         hmfree(normals_map);
+//     }
+// }
 
 int main(void)
 {
 
     // MESH DATA -> TODO: figure out allocation
-    _Vertex vertices[8] = {
+    Vertex vertices[8] = {
         { -1.0, -1.0, -1.0 },
         { 1.0, -1.0, -1.0 },
         { 1.0, 1.0, -1.0 },
@@ -255,7 +255,7 @@ int main(void)
         { 3, 2, 6, 7 }, // TOP
         { 4, 5, 1, 0 } // BOTTOM
     };
-    _Polygon polygons[6];
+    Polygon polygons[6];
     int* indices[6];
     for (int i = 0; i < 6; i++) {
         indices[i] = NULL;
@@ -290,7 +290,7 @@ int main(void)
     //     printf("\n");
     // }
 
-    _Vertex* renderVertices = NULL;
+    Vertex* renderVertices = NULL;
 
     // Window setting
     InitWindow(1280, 720, "Prism");
@@ -344,7 +344,7 @@ int main(void)
             model.vertexColors[i] = WHITE;
         }
 
-        _SplitPolygons(&model);
+        // _SplitPolygons(&model);
 
         // Handle polygon selection
         if (selection.mode == POLYGON_SELECTION) {

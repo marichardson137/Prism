@@ -4,24 +4,30 @@
 #include "raylib.h"
 #include "raymath.h"
 
-typedef Vector3 _Vertex;
+#include <vector>
+
+typedef Vector3 Vertex;
 
 typedef struct {
-    int* indices;           // Vertex references
-    int numIndices; 
-    int (*triangles)[3];
+    int a, b, c;
+} Triangle;
+
+using namespace std;
+
+class Polygon {
+public:
+    vector<int> indices;
+    Triangle* triangles;
     Color color;
-} _Polygon;
 
-typedef struct {
-    _Vertex* vertices;
-    int numVertices;
-    Color* vertexColors;
-    _Polygon* polygons;
-    int numPolygons;
-} _Model;
+    void triangulate(const vector<Vertex>& vertices);
+    void draw(const vector<Vertex>& vertices);
+};
 
-void _TriangulatePolygon(_Model model, _Polygon* polygon);
-void _DrawPolygon(_Model model, _Polygon* polygon);
+class Model {
+    vector<Vertex> vertices;
+    vector<Color> vertexColors;
+    vector<Polygon> polygons;
+};
 
 #endif
