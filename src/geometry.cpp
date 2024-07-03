@@ -1,11 +1,14 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <iostream>
 
 #include "geometry.h"
-#include "interface.h"
+#include "triangulate.h"
 
-void Polygon::draw(const std::vector<Vertex>& vertices)
+using namespace prism;
+
+void Polygon::triangulate(const std::vector<Vertex>& vertices)
 {
     // Translate to 2D...
     // Find the normal of the polygon's plane
@@ -29,41 +32,43 @@ void Polygon::draw(const std::vector<Vertex>& vertices)
         rotationMatrix = MatrixRotate(rotationAxis, angle);
     }
 
-    Vector2 vertices2D[indices.size()];
+    Vector2dVector vertices2D;
 
     // Project each vertex onto the 2D plane
     for (int i = 0; i < indices.size(); i++) {
         Vertex v = vertices[indices[i]];
         // Rotate the vertex to align the polygon's plane with the z-axis
         Vector3 rotatedVertex = Vector3Transform(v, rotationMatrix);
-        // Drop the z-coordinate
-        vertices2D[i] = (Vector2) { rotatedVertex.x, rotatedVertex.z };
+        // Drop the y-coordinate
+        vertices2D.push_back(Vector2d(rotatedVertex.x, rotatedVertex.z));
     }
 
-    double doubleVertices[indices.size() + 1][2];
-    for (int i = 0; i < indices.size(); i++) {
-        Vector2 screenPos = vertices2D[i];
-        doubleVertices[i + 1][0] = screenPos.x;
-        doubleVertices[i + 1][1] = screenPos.y;
+    Vector2dVector result;
+    Triangulate::Process(vertices2D, result);
+
+    // Build the structured triangle list
+    triangles.clear();
+    for (int i = 0; i < result.size(); i += 3) {
+        Vector3 a = {result[i].GetX(), 0, result[i].GetY()};
+        Vector3 b = {result[i + 1].GetX(), 0, result[i + 1].GetY()};
+        Vector3 c = {result[i + 2].GetX(), 0, result[i + 2].GetY()};
+        Matrix inverseRotationMatrix = MatrixInvert(rotationMatrix);
+        a = Vector3Transform(a, inverseRotationMatrix);
+        b = Vector3Transform(b, inverseRotationMatrix);
+        c = Vector3Transform(c, inverseRotationMatrix);
+        Triangle triangle = {a, b, c};
+        triangles.push_back(triangle);
     }
 
-    triangles = (Triangle*)MemRealloc(triangles, sizeof(Triangle) * indices.size());
-    int cntr[1] = { indices.size() };
-    triangulate_polygon(1, cntr, doubleVertices, reinterpret_cast<int(*)[3]>(triangles));
 }
 
 void Polygon::draw(const std::vector<Vertex>& vertices)
 {
-    for (int i = 0; i < indices.size(); i++) {
+    for (int i = 0; i < triangles.size(); i++) {
         Triangle triangle = triangles[i];
-        if (triangle.a == 0)
-            break;
-        Vertex v1 = vertices[indices[triangle.a - 1]];
-        Vertex v2 = vertices[indices[triangle.b - 1]];
-        Vertex v3 = vertices[indices[triangle.c - 1]];
-        DrawTriangle3D(v1, v3, v2, color);
-        DrawLine3D(v1, v2, WHITE);
-        DrawLine3D(v1, v3, WHITE);
-        DrawLine3D(v3, v2, WHITE);
+        DrawTriangle3D(triangle.a, triangle.b, triangle.c, color);
+        // DrawLine3D(v1, v2, WHITE);
+        // DrawLine3D(v1, v3, WHITE);
+        // DrawLine3D(v3, v2, WHITE);
     }
 }

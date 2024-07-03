@@ -1,5 +1,5 @@
 OSX_COMPILER = clang
-WIN_COMPILER = gcc
+WIN_COMPILER = g++
 SOURCE_LIBS = -Ilib/
 
 # MacOS specific flags and libraries

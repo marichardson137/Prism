@@ -8,6 +8,8 @@
         "float.h": "c",
         "rendering.h": "c",
         "geometry.h": "c",
-        "selection.h": "c"
+        "selection.h": "c",
+        "vector": "cpp",
+        "iostream": "cpp"
     }
 }
