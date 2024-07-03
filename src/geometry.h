@@ -12,7 +12,7 @@ namespace prism {
 typedef Vector3 Vertex;
 
 typedef struct {
-    Vector3 a, b, c;
+    int a, b, c;
 } Triangle;
 
 class Polygon {

@@ -73,7 +73,7 @@ public:
   // triangulate a contour/polygon, places results in STL vector
   // as series of triangles.
   static bool Process(const Vector2dVector &contour,
-                      Vector2dVector &result);
+                      std::vector<int> &result);
 
   // compute area of a contour/polygon
   static float Area(const Vector2dVector &contour);

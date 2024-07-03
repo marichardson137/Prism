@@ -43,20 +43,17 @@ void Polygon::triangulate(const std::vector<Vertex>& vertices)
         vertices2D.push_back(Vector2d(rotatedVertex.x, rotatedVertex.z));
     }
 
-    Vector2dVector result;
+    vector<int> result;
     Triangulate::Process(vertices2D, result);
 
     // Build the structured triangle list
     triangles.clear();
     for (int i = 0; i < result.size(); i += 3) {
-        Vector3 a = {result[i].GetX(), 0, result[i].GetY()};
-        Vector3 b = {result[i + 1].GetX(), 0, result[i + 1].GetY()};
-        Vector3 c = {result[i + 2].GetX(), 0, result[i + 2].GetY()};
-        Matrix inverseRotationMatrix = MatrixInvert(rotationMatrix);
-        a = Vector3Transform(a, inverseRotationMatrix);
-        b = Vector3Transform(b, inverseRotationMatrix);
-        c = Vector3Transform(c, inverseRotationMatrix);
-        Triangle triangle = {a, b, c};
+        Triangle triangle = {
+            indices[result[i]], 
+            indices[result[i + 1]], 
+            indices[result[i + 2]]
+        };
         triangles.push_back(triangle);
     }
 
@@ -66,9 +63,12 @@ void Polygon::draw(const std::vector<Vertex>& vertices)
 {
     for (int i = 0; i < triangles.size(); i++) {
         Triangle triangle = triangles[i];
-        DrawTriangle3D(triangle.a, triangle.b, triangle.c, color);
-        // DrawLine3D(v1, v2, WHITE);
-        // DrawLine3D(v1, v3, WHITE);
-        // DrawLine3D(v3, v2, WHITE);
+        Vector3 v1 = vertices[triangle.a];
+        Vector3 v2 = vertices[triangle.b];
+        Vector3 v3 = vertices[triangle.c];
+        DrawTriangle3D(v1, v3, v2, color);
+        DrawLine3D(v1, v2, WHITE);
+        DrawLine3D(v1, v3, WHITE);
+        DrawLine3D(v3, v2, WHITE);
     }
 }
