@@ -58,6 +58,8 @@ int main(void)
     camera.up = (Vector3) { 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
 
+    Selection selection = Selection();
+
     // Update loop
     while (!WindowShouldClose()) {
 
@@ -73,6 +75,19 @@ int main(void)
         Vector2 mousePos = GetMousePosition();
         Ray mouseRay = GetMouseRay(mousePos, camera);
 
+        for (Polygon& polygon : model.polygons) {
+            polygon.triangulate(model.vertices);
+            polygon.color = BEIGE;
+        }
+        for (Color& color : model.vertexColors) {
+            color = WHITE;
+        }
+
+
+        selection.update(mouseRay, model);
+        if (IsKeyPressed(KEY_R))
+            selection.reset();
+
         BeginDrawing();
 
         DrawFPS(10, 10);
@@ -85,14 +100,13 @@ int main(void)
 
         // Draw the faces
         for (Polygon polygon : model.polygons) {
-            polygon.triangulate(model.vertices);
             polygon.draw(model.vertices);
         }
 
         // Draw the vertices
-        // for (int i = 0; i < model.vertices.size(); i++) {
-        //     DrawSphere(model.vertices[i], 0.05f, model.vertexColors[i]);
-        // }
+        for (int i = 0; i < model.vertices.size(); i++) {
+            DrawSphere(model.vertices[i], 0.05f, model.vertexColors[i]);
+        }
 
         EndMode3D();
 

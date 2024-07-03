@@ -6,6 +6,7 @@
 #include "geometry.h"
 #include "triangulate.h"
 
+
 using namespace prism;
 
 void Polygon::triangulate(const std::vector<Vertex>& vertices)
