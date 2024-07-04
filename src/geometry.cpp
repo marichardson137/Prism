@@ -112,6 +112,7 @@ void prism::Model::splitPolygons()
 {
     int fixedNumPolygons = polygons.size();
     vector<Polygon> newPolygons;
+    vector<Polygon> splitPolygons;
     for (int p = 0; p < fixedNumPolygons; p++) {
         Polygon& polygon = polygons[p];
         std::map<Vector3, std::vector<int>, Vector3Comparator> mapOfNormals; // Normals -> List of Triangles (indices)
@@ -130,6 +131,7 @@ void prism::Model::splitPolygons()
             mapOfNormals[normal].push_back(t);
         }
 
+        bool first = true;
         for (const auto& [normal, triangleIndices] : mapOfNormals) { // for each normal
             if (mapOfNormals.size() != 1)
                 std::cout << "Polygon " << p << ": " << normal.x << " " << normal.y << " " << normal.z << "\n"
@@ -156,9 +158,15 @@ void prism::Model::splitPolygons()
                 std::cout << std::endl;
             }
             Polygon newPolygon = Polygon(finalIndices);
-            newPolygons.push_back(newPolygon);
+            if (first) {
+                newPolygons.push_back(newPolygon);
+                first = false;
+            } else {
+                splitPolygons.push_back(newPolygon);
+            }
         }
     }
+    newPolygons.insert(newPolygons.end(), splitPolygons.begin(), splitPolygons.end());
     if (newPolygons.size() > 0) {
         polygons.clear();
         polygons = newPolygons;
