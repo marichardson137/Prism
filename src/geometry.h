@@ -34,6 +34,8 @@ public:
     vector<Polygon> polygons;
 
     Model(vector<Vertex> vertices, vector<Polygon> polygons): vertices(vertices), vertexColors(vertices.size(), WHITE), polygons(polygons) {}
+
+    void splitPolygons();
 };
 
 }

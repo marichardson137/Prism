@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <float.h>
+#include <iostream>
 
 #include "raylib.h"
 #include "raymath.h"
@@ -75,6 +76,8 @@ int main(void)
         Vector2 mousePos = GetMousePosition();
         Ray mouseRay = GetMouseRay(mousePos, camera);
 
+        model.splitPolygons();
+
         for (Polygon& polygon : model.polygons) {
             polygon.triangulate(model.vertices);
             polygon.color = BEIGE;
@@ -83,6 +86,14 @@ int main(void)
             color = WHITE;
         }
 
+        // for (int i = 0; i < model.polygons.size(); i++) {
+        //     Polygon polygon = model.polygons[i];
+        //     std::cout << "Polygon " << i << ": { ";
+        //     for (int x = 0; x < polygon.indices.size(); x++) {
+        //         std::cout << polygon.indices[x] << " ";
+        //     }
+        //     std::cout << "}\n";
+        // }
 
         selection.update(mouseRay, model);
         if (IsKeyPressed(KEY_R))

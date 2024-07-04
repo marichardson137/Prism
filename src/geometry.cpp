@@ -1,4 +1,6 @@
 #include <vector>
+#include <map>
+#include <set>
 #include <cmath>
 #include <algorithm>
 #include <iostream>
@@ -71,5 +73,72 @@ void Polygon::draw(const std::vector<Vertex>& vertices)
         DrawLine3D(v1, v2, WHITE);
         DrawLine3D(v1, v3, WHITE);
         DrawLine3D(v3, v2, WHITE);
+    }
+}
+
+// Define the less-than operator for Vector3 (for use in map)
+bool operator<(const Vector3& lhs, const Vector3& rhs) {
+    if (lhs.x != rhs.x) return lhs.x < rhs.x;
+    if (lhs.y != rhs.y) return lhs.y < rhs.y;
+    return lhs.z < rhs.z;
+}
+
+bool contains(const std::vector<int>& vec, int value) {
+    return std::find(vec.begin(), vec.end(), value) != vec.end();
+}
+
+float sanitize(float num)
+{
+    if (num == -0.0f) {
+        return 0.0f;
+    }
+    return num;
+}
+
+void prism::Model::splitPolygons() {
+    int fixedNumPolygons = polygons.size();
+    vector<Polygon> newPolygons;
+    for (int p = 0; p < fixedNumPolygons; p++) {
+        Polygon& polygon = polygons[p];
+        std::map<Vector3, std::vector<int>> mapOfNormals;   // Normals -> List of Triangles (indices)
+        for (int t = 0; t < polygon.triangles.size(); t++) {
+            Triangle triangle = polygon.triangles[t];
+            Vertex v1 = vertices[triangle.a];
+            Vertex v2 = vertices[triangle.b];
+            Vertex v3 = vertices[triangle.c];
+            Vector3 edge1 = Vector3Subtract(v2, v1);
+            Vector3 edge2 = Vector3Subtract(v3, v1);
+            Vector3 normal = Vector3CrossProduct(edge2, edge1);
+            normal.x = sanitize(normal.x);
+            normal.y = sanitize(normal.y);                  // Do I need?
+            normal.z = sanitize(normal.z);
+            normal = Vector3Normalize(normal);
+            mapOfNormals[normal].push_back(t);
+        }
+        if (mapOfNormals.size() != 1)
+            std::cout << "Polygon " << p << " " << mapOfNormals.size() << "\n";
+        for (const auto& [normal, triangleIndices] : mapOfNormals) {            // for each normal
+            std::vector<int> uniqueIndices;
+            for (int t = 0; t < triangleIndices.size(); t++) {                  // for each triangle
+                Triangle triangle = polygon.triangles[t];
+                if (!contains(uniqueIndices, triangle.a))
+                    uniqueIndices.push_back(triangle.a);
+                if (!contains(uniqueIndices, triangle.b))
+                    uniqueIndices.push_back(triangle.b);
+                if (!contains(uniqueIndices, triangle.c))
+                    uniqueIndices.push_back(triangle.c);
+            }
+            std::vector<int> finalIndices;
+            for (int i = 0; i < polygon.indices.size(); i++) {
+                if (contains(uniqueIndices, polygon.indices[i]))
+                    finalIndices.push_back(polygon.indices[i]);
+            }
+            Polygon newPolygon = Polygon(finalIndices);
+            newPolygons.push_back(newPolygon);
+        }
+    }
+    if (newPolygons.size() > 0) {
+        polygons.clear();
+        polygons = newPolygons;
     }
 }
