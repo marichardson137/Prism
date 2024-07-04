@@ -150,10 +150,12 @@ void Selection::edit(prism::Model& model)
         // Extrusion
         if (IsKeyPressed(KEY_E)) {
             if (selectedPolygons.size() == 1) {
+                // Create the extuded polygo
                 Polygon polygon = model.polygons[selectedPolygons[0]];
-                Vertex v1 = model.vertices[polygon.indices[0]];
-                Vertex v2 = model.vertices[polygon.indices[1]];
-                Vertex v3 = model.vertices[polygon.indices[2]];
+                vector<int>& oldIndices = polygon.indices;
+                Vertex v1 = model.vertices[oldIndices[0]];
+                Vertex v2 = model.vertices[oldIndices[1]];
+                Vertex v3 = model.vertices[oldIndices[2]];
                 Vector3 edge1 = Vector3Subtract(v2, v1);
                 Vector3 edge2 = Vector3Subtract(v3, v1);
                 Vector3 normal = Vector3CrossProduct(edge2, edge1);
@@ -169,6 +171,21 @@ void Selection::edit(prism::Model& model)
                 Polygon newPolygon = Polygon(newIndices);
                 newPolygon.triangulate(model.vertices);
                 model.polygons.push_back(newPolygon);
+
+                // Patch in sides
+                for (int i = 0; i < oldIndices.size(); i++) {
+                    int start = i;
+                    int end = (i + 1) % oldIndices.size();
+                    vector<int> sideIndices = {
+                        oldIndices[start],
+                        oldIndices[end],
+                        newIndices[end],
+                        newIndices[start]
+                    };
+                    Polygon sidePolygon = Polygon(sideIndices);
+                    sidePolygon.triangulate(model.vertices);
+                    model.polygons.push_back(sidePolygon);
+                }
             }
         }
         break;
