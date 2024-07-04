@@ -21,7 +21,7 @@ void Selection::update(const Ray mouseRay, prism::Model& model)
     changeMode();
     select(mouseRay, model);
     color(model);
-    move(model);
+    edit(model);
 }
 
 void Selection::select(const Ray mouseRay, prism::Model& model)
@@ -102,9 +102,27 @@ void Selection::color(prism::Model& model)
     }
 }
 
-void Selection::move(prism::Model& model)
+std::ostream& operator<<(std::ostream& os, const Vector3& vec)
 {
+    os << "Vector3(" << vec.x << ", " << vec.y << ", " << vec.z << ")";
+    return os;
+}
 
+std::ostream& operator<<(std::ostream& os, const std::vector<int>& vec)
+{
+    os << "[";
+    for (size_t i = 0; i < vec.size(); ++i) {
+        os << vec[i];
+        if (i != vec.size() - 1) {
+            os << ", ";
+        }
+    }
+    os << "]";
+    return os;
+}
+
+void Selection::edit(prism::Model& model)
+{
     float moveSpeed = 0.05f;
     if (IsKeyDown(KEY_DOWN))
         moveSpeed *= -1.0f;
@@ -112,23 +130,46 @@ void Selection::move(prism::Model& model)
     switch (mode) {
 
     case POLYGON_SELECTION:
+        // Transform
         if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_DOWN)) {
             for (int p : selectedPolygons) {
                 Polygon& polygon = model.polygons[p];
                 Vertex v1 = model.vertices[polygon.indices[0]];
                 Vertex v2 = model.vertices[polygon.indices[1]];
                 Vertex v3 = model.vertices[polygon.indices[2]];
-
                 Vector3 edge1 = Vector3Subtract(v2, v1);
                 Vector3 edge2 = Vector3Subtract(v3, v1);
                 Vector3 normal = Vector3CrossProduct(edge2, edge1);
                 normal = Vector3Normalize(normal);
                 normal = Vector3Scale(normal, moveSpeed);
                 for (int i = 0; i < polygon.indices.size(); i++) {
-                    model.vertices[polygon.indices[i]].x += normal.x;
-                    model.vertices[polygon.indices[i]].y += normal.y;
-                    model.vertices[polygon.indices[i]].z += normal.z;
+                    model.vertices[polygon.indices[i]] = Vector3Add(model.vertices[polygon.indices[i]], normal);
                 }
+            }
+        }
+        // Extrusion
+        if (IsKeyPressed(KEY_E)) {
+            if (selectedPolygons.size() == 1) {
+                Polygon polygon = model.polygons[selectedPolygons[0]];
+                Vertex v1 = model.vertices[polygon.indices[0]];
+                Vertex v2 = model.vertices[polygon.indices[1]];
+                Vertex v3 = model.vertices[polygon.indices[2]];
+                Vector3 edge1 = Vector3Subtract(v2, v1);
+                Vector3 edge2 = Vector3Subtract(v3, v1);
+                Vector3 normal = Vector3CrossProduct(edge2, edge1);
+                normal = Vector3Normalize(normal);
+                normal = Vector3Scale(normal, 1.0f);
+                std::cout << "EXTRUDING : " << normal << std::endl;
+                vector<int> newIndices;
+                for (int i = 0; i < polygon.indices.size(); i++) {
+                    newIndices.push_back(model.vertices.size());
+                    Vertex newVertex = Vector3Add(model.vertices[polygon.indices[i]], normal);
+                    model.vertices.push_back(newVertex);
+                }
+                std::cout << newIndices << std::endl;
+                Polygon newPolygon = Polygon(newIndices);
+                newPolygon.triangulate(model.vertices);
+                model.polygons.push_back(newPolygon);
             }
         }
         break;

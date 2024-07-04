@@ -38,7 +38,7 @@ private:
     void changeMode();
     void select(const Ray mouseRay, prism::Model& model);
     void color(prism::Model& model);
-    void move(prism::Model& model);
+    void edit(prism::Model& model);
 };
 
 #endif

@@ -21,7 +21,7 @@ public:
     vector<Triangle> triangles;
     Color color;
 
-    Polygon(vector<int> indices)
+    Polygon(const vector<int> indices)
         : indices(indices)
         , triangles()
         , color(BEIGE)
@@ -38,7 +38,7 @@ public:
     vector<Color> vertexColors;
     vector<Polygon> polygons;
 
-    Model(vector<Vertex> vertices, vector<Polygon> polygons)
+    Model(const vector<Vertex> vertices, const vector<Polygon> polygons)
         : vertices(vertices)
         , vertexColors(vertices.size(), WHITE)
         , polygons(polygons)

@@ -76,16 +76,6 @@ void Polygon::draw(const std::vector<Vertex>& vertices)
     }
 }
 
-// Define the less-than operator for Vector3 (for use in map)
-// bool operator<(const Vector3& lhs, const Vector3& rhs)
-// {
-//     if (lhs.x != rhs.x)
-//         return lhs.x < rhs.x;
-//     if (lhs.y != rhs.y)
-//         return lhs.y < rhs.y;
-//     return lhs.z < rhs.z;
-// }
-
 struct Vector3Comparator {
     bool operator()(const Vector3& lhs, const Vector3& rhs) const
     {

@@ -86,14 +86,16 @@ int main(void)
             color = WHITE;
         }
 
-        // for (int i = 0; i < model.polygons.size(); i++) {
-        //     Polygon polygon = model.polygons[i];
-        //     std::cout << "Polygon " << i << ": { ";
-        //     for (int x = 0; x < polygon.indices.size(); x++) {
-        //         std::cout << polygon.indices[x] << " ";
-        //     }
-        //     std::cout << "}\n";
-        // }
+        if (IsKeyPressed(KEY_D)) {
+            for (int i = 0; i < model.polygons.size(); i++) {
+                Polygon polygon = model.polygons[i];
+                std::cout << "Polygon " << i << ": { ";
+                for (int x = 0; x < polygon.indices.size(); x++) {
+                    std::cout << polygon.indices[x] << " ";
+                }
+                std::cout << "}\n";
+            }
+        }
 
         selection.update(mouseRay, model);
         if (IsKeyPressed(KEY_R))
@@ -128,7 +130,6 @@ int main(void)
         // }
 
         EndDrawing();
-
     }
 
     CloseWindow();
