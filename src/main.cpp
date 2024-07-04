@@ -87,6 +87,11 @@ int main(void)
         }
 
         if (IsKeyPressed(KEY_D)) {
+            for (int i = 0; i < model.vertices.size(); i++) {
+                Vertex vertex = model.vertices[i];
+                std::cout << "V" << i << "(" << vertex.x << ", " << vertex.y << ", " << vertex.z << "), ";
+            }
+            std::cout << std::endl;
             for (int i = 0; i < model.polygons.size(); i++) {
                 Polygon polygon = model.polygons[i];
                 std::cout << "Polygon " << i << ": { ";

@@ -159,14 +159,13 @@ void Selection::edit(prism::Model& model)
                 Vector3 normal = Vector3CrossProduct(edge2, edge1);
                 normal = Vector3Normalize(normal);
                 normal = Vector3Scale(normal, 1.0f);
-                std::cout << "EXTRUDING : " << normal << std::endl;
                 vector<int> newIndices;
                 for (int i = 0; i < polygon.indices.size(); i++) {
                     newIndices.push_back(model.vertices.size());
                     Vertex newVertex = Vector3Add(model.vertices[polygon.indices[i]], normal);
                     model.vertices.push_back(newVertex);
+                    model.vertexColors.push_back(WHITE);
                 }
-                std::cout << newIndices << std::endl;
                 Polygon newPolygon = Polygon(newIndices);
                 newPolygon.triangulate(model.vertices);
                 model.polygons.push_back(newPolygon);
