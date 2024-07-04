@@ -68,9 +68,11 @@ void Polygon::draw(const std::vector<Vertex>& vertices)
         Vector3 v2 = vertices[triangle.b];
         Vector3 v3 = vertices[triangle.c];
         DrawTriangle3D(v1, v3, v2, color);
-        DrawLine3D(v1, v2, WHITE);
-        DrawLine3D(v1, v3, WHITE);
-        DrawLine3D(v3, v2, WHITE);
+    }
+    for (int i = 0; i < indices.size(); i++) {
+        Vector3 start = vertices[indices[i]];
+        Vector3 end = vertices[indices[(i + 1) % indices.size()]];
+        DrawLine3D(start, end, WHITE);
     }
 }
 
