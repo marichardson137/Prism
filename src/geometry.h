@@ -32,11 +32,23 @@ public:
     void draw(const vector<Vertex>& vertices);
 };
 
+typedef enum {
+    PRIMITIVE_CUBE = 0,
+    PRIMITIVE_CYLINDER
+} PrimitiveType;
+
 class Model {
 public:
     vector<Vertex> vertices;
     vector<Color> vertexColors;
     vector<Polygon> polygons;
+
+    Model()
+        : Model(PRIMITIVE_CUBE)
+    {
+    }
+
+    Model(PrimitiveType primitive);
 
     Model(const vector<Vertex> vertices, const vector<Polygon> polygons)
         : vertices(vertices)

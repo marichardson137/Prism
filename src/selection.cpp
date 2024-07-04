@@ -150,7 +150,7 @@ void Selection::edit(prism::Model& model)
         // Extrusion
         if (IsKeyPressed(KEY_E)) {
             if (selectedPolygons.size() == 1) {
-                // Create the extuded polygo
+                // Create the extruded polygon
                 Polygon polygon = model.polygons[selectedPolygons[0]];
                 vector<int>& oldIndices = polygon.indices;
                 Vertex v1 = model.vertices[oldIndices[0]];

@@ -100,6 +100,49 @@ float sanitize(float num)
     return num;
 }
 
+prism::Model::Model(PrimitiveType primitive)
+{
+    switch (primitive) {
+
+    case PRIMITIVE_CUBE:
+        vertices = {
+            { -1.0, -1.0, -1.0 },
+            { 1.0, -1.0, -1.0 },
+            { 1.0, 1.0, -1.0 },
+            { -1.0, 1.0, -1.0 },
+            { -1.0, -1.0, 1.0 },
+            { 1.0, -1.0, 1.0 },
+            { 1.0, 1.0, 1.0 },
+            { -1.0, 1.0, 1.0 }
+        };
+        polygons.push_back(Polygon({ 0, 1, 2, 3 }));
+        polygons.push_back(Polygon({ 4, 0, 3, 7 }));
+        polygons.push_back(Polygon({ 5, 4, 7, 6 }));
+        polygons.push_back(Polygon({ 1, 5, 6, 2 }));
+        polygons.push_back(Polygon({ 3, 2, 6, 7 })); // TOP
+        polygons.push_back(Polygon({ 4, 5, 1, 0 })); // BOTTOM
+        break;
+
+    case PRIMITIVE_CYLINDER:
+        for (int i = 0; i < 8; ++i) {
+            float angle = i * (PI / 4.0);
+            vertices.push_back({ cos(angle), 1.0, sin(angle) });
+            vertices.push_back({ cos(angle), -1.0, sin(angle) });
+        }
+        polygons.push_back(Polygon({ 0, 2, 4, 6, 8, 10, 12, 14 }));
+        polygons.push_back(Polygon({ 15, 13, 11, 9, 7, 5, 3, 1 }));
+        for (int i = 0; i < 16; i += 2) {
+            polygons.push_back(Polygon({ (1 + i) % 16, (3 + i) % 16, (2 + i) % 16, (0 + i) % 16 }));
+        }
+
+        break;
+    }
+
+    for (int i = 0; i < vertices.size(); i++) {
+        vertexColors.push_back(WHITE);
+    }
+}
+
 void prism::Model::splitPolygons()
 {
     int fixedNumPolygons = polygons.size();

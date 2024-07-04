@@ -20,33 +20,7 @@ using namespace prism;
 int main(void)
 {
 
-    vector<Vertex> vertices = {
-        { -1.0, -1.0, -1.0 },
-        { 1.0, -1.0, -1.0 },
-        { 1.0, 1.0, -1.0 },
-        { -1.0, 1.0, -1.0 },
-        { -1.0, -1.0, 1.0 },
-        { 1.0, -1.0, 1.0 },
-        { 1.0, 1.0, 1.0 },
-        { -1.0, 1.0, 1.0 }
-    };
-    int indicesRaw[6][4] = {
-        { 0, 1, 2, 3 },
-        { 4, 0, 3, 7 },
-        { 5, 4, 7, 6 },
-        { 1, 5, 6, 2 },
-        { 3, 2, 6, 7 }, // TOP
-        { 4, 5, 1, 0 } // BOTTOM
-    };
-    vector<Polygon> polygons;
-    for (int i = 0; i < 6; i++) {
-        vector<int> indices;
-        for (int x = 0; x < 4; x++) {
-            indices.push_back(indicesRaw[i][x]);
-        }
-        polygons.push_back(Polygon(indices));
-    }
-    prism::Model model = prism::Model(vertices, polygons);
+    prism::Model model = prism::Model(PRIMITIVE_CYLINDER);
 
     // Window setting
     InitWindow(1280, 720, "Prism");
