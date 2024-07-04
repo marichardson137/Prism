@@ -8,7 +8,6 @@
 #include "geometry.h"
 #include "triangulate.h"
 
-
 using namespace prism;
 
 void Polygon::triangulate(const std::vector<Vertex>& vertices)
@@ -53,13 +52,12 @@ void Polygon::triangulate(const std::vector<Vertex>& vertices)
     triangles.clear();
     for (int i = 0; i < result.size(); i += 3) {
         Triangle triangle = {
-            indices[result[i]], 
-            indices[result[i + 1]], 
+            indices[result[i]],
+            indices[result[i + 1]],
             indices[result[i + 2]]
         };
         triangles.push_back(triangle);
     }
-
 }
 
 void Polygon::draw(const std::vector<Vertex>& vertices)
@@ -77,13 +75,28 @@ void Polygon::draw(const std::vector<Vertex>& vertices)
 }
 
 // Define the less-than operator for Vector3 (for use in map)
-bool operator<(const Vector3& lhs, const Vector3& rhs) {
-    if (lhs.x != rhs.x) return lhs.x < rhs.x;
-    if (lhs.y != rhs.y) return lhs.y < rhs.y;
-    return lhs.z < rhs.z;
-}
+// bool operator<(const Vector3& lhs, const Vector3& rhs)
+// {
+//     if (lhs.x != rhs.x)
+//         return lhs.x < rhs.x;
+//     if (lhs.y != rhs.y)
+//         return lhs.y < rhs.y;
+//     return lhs.z < rhs.z;
+// }
 
-bool contains(const std::vector<int>& vec, int value) {
+struct Vector3Comparator {
+    bool operator()(const Vector3& lhs, const Vector3& rhs) const
+    {
+        if (std::fabs(lhs.x - rhs.x) > EPSILON)
+            return lhs.x < rhs.x;
+        if (std::fabs(lhs.y - rhs.y) > EPSILON)
+            return lhs.y < rhs.y;
+        return std::fabs(lhs.z - rhs.z) > EPSILON ? lhs.z < rhs.z : false;
+    }
+};
+
+bool contains(const std::vector<int>& vec, int value)
+{
     return std::find(vec.begin(), vec.end(), value) != vec.end();
 }
 
@@ -95,12 +108,13 @@ float sanitize(float num)
     return num;
 }
 
-void prism::Model::splitPolygons() {
+void prism::Model::splitPolygons()
+{
     int fixedNumPolygons = polygons.size();
     vector<Polygon> newPolygons;
     for (int p = 0; p < fixedNumPolygons; p++) {
         Polygon& polygon = polygons[p];
-        std::map<Vector3, std::vector<int>> mapOfNormals;   // Normals -> List of Triangles (indices)
+        std::map<Vector3, std::vector<int>, Vector3Comparator> mapOfNormals; // Normals -> List of Triangles (indices)
         for (int t = 0; t < polygon.triangles.size(); t++) {
             Triangle triangle = polygon.triangles[t];
             Vertex v1 = vertices[triangle.a];
@@ -109,18 +123,20 @@ void prism::Model::splitPolygons() {
             Vector3 edge1 = Vector3Subtract(v2, v1);
             Vector3 edge2 = Vector3Subtract(v3, v1);
             Vector3 normal = Vector3CrossProduct(edge2, edge1);
-            normal.x = sanitize(normal.x);
-            normal.y = sanitize(normal.y);                  // Do I need?
-            normal.z = sanitize(normal.z);
             normal = Vector3Normalize(normal);
+            normal.x = sanitize(normal.x);
+            normal.y = sanitize(normal.y); // Do I need?
+            normal.z = sanitize(normal.z);
             mapOfNormals[normal].push_back(t);
         }
-        if (mapOfNormals.size() != 1)
-            std::cout << "Polygon " << p << " " << mapOfNormals.size() << "\n";
-        for (const auto& [normal, triangleIndices] : mapOfNormals) {            // for each normal
+
+        for (const auto& [normal, triangleIndices] : mapOfNormals) { // for each normal
+            if (mapOfNormals.size() != 1)
+                std::cout << "Polygon " << p << ": " << normal.x << " " << normal.y << " " << normal.z << "\n"
+                          << "\t";
             std::vector<int> uniqueIndices;
-            for (int t = 0; t < triangleIndices.size(); t++) {                  // for each triangle
-                Triangle triangle = polygon.triangles[t];
+            for (int triangleIndex : triangleIndices) { // for each triangle
+                Triangle triangle = polygon.triangles[triangleIndex];
                 if (!contains(uniqueIndices, triangle.a))
                     uniqueIndices.push_back(triangle.a);
                 if (!contains(uniqueIndices, triangle.b))
@@ -132,6 +148,12 @@ void prism::Model::splitPolygons() {
             for (int i = 0; i < polygon.indices.size(); i++) {
                 if (contains(uniqueIndices, polygon.indices[i]))
                     finalIndices.push_back(polygon.indices[i]);
+            }
+            if (mapOfNormals.size() != 1) {
+                for (int num : uniqueIndices) {
+                    std::cout << num << " ";
+                }
+                std::cout << std::endl;
             }
             Polygon newPolygon = Polygon(finalIndices);
             newPolygons.push_back(newPolygon);

@@ -21,7 +21,12 @@ public:
     vector<Triangle> triangles;
     Color color;
 
-    Polygon(vector<int> indices): indices(indices), triangles(), color(BEIGE) {}
+    Polygon(vector<int> indices)
+        : indices(indices)
+        , triangles()
+        , color(BEIGE)
+    {
+    }
 
     void triangulate(const vector<Vertex>& vertices);
     void draw(const vector<Vertex>& vertices);
@@ -33,7 +38,12 @@ public:
     vector<Color> vertexColors;
     vector<Polygon> polygons;
 
-    Model(vector<Vertex> vertices, vector<Polygon> polygons): vertices(vertices), vertexColors(vertices.size(), WHITE), polygons(polygons) {}
+    Model(vector<Vertex> vertices, vector<Polygon> polygons)
+        : vertices(vertices)
+        , vertexColors(vertices.size(), WHITE)
+        , polygons(polygons)
+    {
+    }
 
     void splitPolygons();
 };

@@ -1,4 +1,4 @@
-OSX_COMPILER = clang
+OSX_COMPILER = clang++
 WIN_COMPILER = g++
 SOURCE_LIBS = -Ilib/
 
