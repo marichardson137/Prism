@@ -30,11 +30,13 @@ public:
 
     void triangulate(const vector<Vertex>& vertices);
     void draw(const vector<Vertex>& vertices);
+    static Vector3 computeNormal(const vector<Vertex>& vertices, const vector<int>& indices);
+    static Vector3 computeCenter(const vector<Vertex>& vertices, const vector<int>& indices);
 };
 
 typedef enum {
-    PRIMITIVE_CUBE = 0,
-    PRIMITIVE_CYLINDER
+    CUBE = 0,
+    CYLINDER
 } PrimitiveType;
 
 class Model {
@@ -44,7 +46,7 @@ public:
     vector<Polygon> polygons;
 
     Model()
-        : Model(PRIMITIVE_CUBE)
+        : Model(CUBE)
     {
     }
 

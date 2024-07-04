@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "selection.h"
+#include "modification.h"
 #include "geometry.h"
 #include "raylib.h"
 #include "raymath.h"
@@ -12,13 +13,18 @@ void Selection::reset()
 {
     selectedPolygons.clear();
     selectedVertices.clear();
+    helperRays.clear();
     activePolygon = -1;
     activeVertex = -1;
+    editMode = DEFAULT;
+    std::cout << "EDIT_MODE -> " << editMode << "\n";
 }
 
 void Selection::update(const Ray mouseRay, prism::Model& model)
 {
-    changeMode();
+    helperRays.clear();
+    changeSelectionMode();
+    changeEditMode();
     select(mouseRay, model);
     color(model);
     edit(model);
@@ -31,9 +37,9 @@ void Selection::select(const Ray mouseRay, prism::Model& model)
 
     float closest = std::numeric_limits<float>::max();
 
-    switch (mode) {
+    switch (selectionMode) {
 
-    case POLYGON_SELECTION:
+    case POLYGON:
         for (int i = 0; i < model.polygons.size(); i++) {
             Polygon& polygon = model.polygons[i];
             for (int t = 0; t < polygon.triangles.size(); t++) {
@@ -50,7 +56,7 @@ void Selection::select(const Ray mouseRay, prism::Model& model)
         }
         break;
 
-    case VERTEX_SELECTION:
+    case VERTEX:
         for (int i = 0; i < model.vertices.size(); i++) {
             RayCollision rc = GetRayCollisionSphere(mouseRay, model.vertices[i], 0.075f);
             if (rc.hit && rc.distance < closest) {
@@ -60,44 +66,53 @@ void Selection::select(const Ray mouseRay, prism::Model& model)
         }
         break;
 
-    case EDGE_SELECTION:
+    case EDGE:
         break;
     }
 }
 
 void Selection::color(prism::Model& model)
 {
-    switch (mode) {
+    switch (selectionMode) {
 
-    case POLYGON_SELECTION:
+    case POLYGON:
         for (int p : selectedPolygons) {
-            model.polygons[p].color = DARKBLUE;
+            Polygon& polygon = model.polygons[p];
+            polygon.color = DARKBLUE;
+            Vector3 normal = Polygon::computeNormal(model.vertices, polygon.indices);
+            Vector3 center = Polygon::computeCenter(model.vertices, polygon.indices);
+            if (editMode != DEFAULT)
+                helperRays.push_back({ center, normal });
         }
         if (activePolygon != -1) {
             model.polygons[activePolygon].color = BLUE;
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                if (!IsKeyDown(KEY_LEFT_SHIFT))
+                if (!IsKeyDown(KEY_LEFT_SHIFT)) {
                     selectedPolygons.clear();
+                    editMode = DEFAULT;
+                }
                 selectedPolygons.push_back(activePolygon);
             }
         }
         break;
 
-    case VERTEX_SELECTION:
+    case VERTEX:
         for (int v : selectedVertices) {
             model.vertexColors[v] = DARKBLUE;
         }
         if (activeVertex != -1) {
             model.vertexColors[activeVertex] = BLUE;
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                if (!IsKeyDown(KEY_LEFT_SHIFT))
+                if (!IsKeyDown(KEY_LEFT_SHIFT)) {
                     selectedVertices.clear();
+                    editMode = DEFAULT;
+                }
                 selectedVertices.push_back(activeVertex);
             }
         }
         break;
 
-    case EDGE_SELECTION:
+    case EDGE:
         break;
     }
 }
@@ -123,91 +138,48 @@ std::ostream& operator<<(std::ostream& os, const std::vector<int>& vec)
 
 void Selection::edit(prism::Model& model)
 {
-    float moveSpeed = 0.05f;
-    if (IsKeyDown(KEY_DOWN))
-        moveSpeed *= -1.0f;
+    switch (selectionMode) {
 
-    switch (mode) {
-
-    case POLYGON_SELECTION:
-        // Transform
-        if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_DOWN)) {
-            for (int p : selectedPolygons) {
-                Polygon& polygon = model.polygons[p];
-                Vertex v1 = model.vertices[polygon.indices[0]];
-                Vertex v2 = model.vertices[polygon.indices[1]];
-                Vertex v3 = model.vertices[polygon.indices[2]];
-                Vector3 edge1 = Vector3Subtract(v2, v1);
-                Vector3 edge2 = Vector3Subtract(v3, v1);
-                Vector3 normal = Vector3CrossProduct(edge2, edge1);
-                normal = Vector3Normalize(normal);
-                normal = Vector3Scale(normal, moveSpeed);
-                for (int i = 0; i < polygon.indices.size(); i++) {
-                    model.vertices[polygon.indices[i]] = Vector3Add(model.vertices[polygon.indices[i]], normal);
-                }
-            }
-        }
-        // Extrusion
-        if (IsKeyPressed(KEY_E)) {
-            if (selectedPolygons.size() == 1) {
-                // Create the extruded polygon
-                Polygon polygon = model.polygons[selectedPolygons[0]];
-                vector<int>& oldIndices = polygon.indices;
-                Vertex v1 = model.vertices[oldIndices[0]];
-                Vertex v2 = model.vertices[oldIndices[1]];
-                Vertex v3 = model.vertices[oldIndices[2]];
-                Vector3 edge1 = Vector3Subtract(v2, v1);
-                Vector3 edge2 = Vector3Subtract(v3, v1);
-                Vector3 normal = Vector3CrossProduct(edge2, edge1);
-                normal = Vector3Normalize(normal);
-                normal = Vector3Scale(normal, 1.0f);
-                vector<int> newIndices;
-                for (int i = 0; i < polygon.indices.size(); i++) {
-                    newIndices.push_back(model.vertices.size());
-                    Vertex newVertex = Vector3Add(model.vertices[polygon.indices[i]], normal);
-                    model.vertices.push_back(newVertex);
-                    model.vertexColors.push_back(WHITE);
-                }
-                Polygon newPolygon = Polygon(newIndices);
-                newPolygon.triangulate(model.vertices);
-                model.polygons.push_back(newPolygon);
-
-                // Patch in sides
-                for (int i = 0; i < oldIndices.size(); i++) {
-                    int start = i;
-                    int end = (i + 1) % oldIndices.size();
-                    vector<int> sideIndices = {
-                        oldIndices[start],
-                        oldIndices[end],
-                        newIndices[end],
-                        newIndices[start]
-                    };
-                    Polygon sidePolygon = Polygon(sideIndices);
-                    sidePolygon.triangulate(model.vertices);
-                    model.polygons.push_back(sidePolygon);
-                }
-            }
-        }
+    case POLYGON:
+        EditPolygon(model, editMode, selectedPolygons, activePolygon);
         break;
 
-    case VERTEX_SELECTION: // TODO :: VERTEX_NORMALS
-        if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_DOWN)) {
-            for (int v : selectedVertices) {
-                model.vertices[v].y += moveSpeed;
-            }
-        }
+    case VERTEX:
+        EditVertex(model, editMode, selectedVertices, activeVertex);
         break;
 
-    case EDGE_SELECTION:
+    case EDGE:
         break;
     }
 }
 
-void Selection::changeMode()
+void Selection::changeSelectionMode()
 {
     if (IsKeyPressed(KEY_TAB)) {
-        mode = static_cast<SelectionMode>((mode + 1) % 3);
+        selectionMode = static_cast<SelectionMode>((selectionMode + 1) % 2);
         reset();
-        std::cout << "SELECTION_MODE -> " << static_cast<int>(mode) << "\n";
+        std::cout << "SELECTION_MODE -> " << selectionMode << "\n";
+    }
+}
+
+void Selection::changeEditMode()
+{
+    if (selectedPolygons.size() > 0 || selectedVertices.size() > 0) {
+        if (IsKeyPressed(KEY_T)) {
+            editMode = TRANSFORM;
+            std::cout << "EDIT_MODE -> " << editMode << "\n";
+        }
+        if (IsKeyPressed(KEY_S)) {
+            editMode = SCALE;
+            std::cout << "EDIT_MODE -> " << editMode << "\n";
+        }
+        if (IsKeyPressed(KEY_E)) {
+            editMode = EXTRUDE;
+            std::cout << "EDIT_MODE -> " << editMode << "\n";
+        }
+        if (IsKeyPressed(KEY_R)) {
+            editMode = ROTATE;
+            std::cout << "EDIT_MODE -> " << editMode << "\n";
+        }
     }
 }

@@ -79,11 +79,11 @@ void Polygon::draw(const std::vector<Vertex>& vertices)
 struct Vector3Comparator {
     bool operator()(const Vector3& lhs, const Vector3& rhs) const
     {
-        if (std::fabs(lhs.x - rhs.x) > EPSILON)
+        if (std::fabs(lhs.x - rhs.x) > 0.0001f)
             return lhs.x < rhs.x;
-        if (std::fabs(lhs.y - rhs.y) > EPSILON)
+        if (std::fabs(lhs.y - rhs.y) > 0.0001f)
             return lhs.y < rhs.y;
-        return std::fabs(lhs.z - rhs.z) > EPSILON ? lhs.z < rhs.z : false;
+        return std::fabs(lhs.z - rhs.z) > 0.0001f ? lhs.z < rhs.z : false;
     }
 };
 
@@ -100,11 +100,32 @@ float sanitize(float num)
     return num;
 }
 
+Vector3 Polygon::computeNormal(const vector<Vertex>& vertices, const vector<int>& indices)
+{
+    Vertex v1 = vertices[indices[0]];
+    Vertex v2 = vertices[indices[1]];
+    Vertex v3 = vertices[indices[2]];
+    Vector3 edge1 = Vector3Subtract(v2, v1);
+    Vector3 edge2 = Vector3Subtract(v3, v1);
+    Vector3 normal = Vector3CrossProduct(edge2, edge1);
+    normal = Vector3Normalize(normal);
+    return normal;
+}
+
+Vector3 Polygon::computeCenter(const vector<Vertex>& vertices, const vector<int>& indices)
+{
+    Vector3 sum = { 0.0f, 0.0f, 0.0f };
+    for (int idx : indices) {
+        sum = Vector3Add(sum, vertices[idx]);
+    }
+    return Vector3Scale(sum, 1.0 / indices.size());
+}
+
 prism::Model::Model(PrimitiveType primitive)
 {
     switch (primitive) {
 
-    case PRIMITIVE_CUBE:
+    case CUBE:
         vertices = {
             { -1.0, -1.0, -1.0 },
             { 1.0, -1.0, -1.0 },
@@ -123,7 +144,7 @@ prism::Model::Model(PrimitiveType primitive)
         polygons.push_back(Polygon({ 4, 5, 1, 0 })); // BOTTOM
         break;
 
-    case PRIMITIVE_CYLINDER:
+    case CYLINDER:
         for (int i = 0; i < 8; ++i) {
             float angle = i * (PI / 4.0);
             vertices.push_back({ cos(angle), 1.0, sin(angle) });

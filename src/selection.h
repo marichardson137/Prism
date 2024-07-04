@@ -6,28 +6,33 @@
 #include "geometry.h"
 #include "raylib.h"
 #include "raymath.h"
+#include "modification.h"
 
 typedef enum {
-    POLYGON_SELECTION = 0,
-    VERTEX_SELECTION,
-    EDGE_SELECTION
+    POLYGON = 0,
+    VERTEX,
+    EDGE
 } SelectionMode;
 
 class Selection {
 
 public:
-    SelectionMode mode;
+    SelectionMode selectionMode;
+    EditMode editMode;
     vector<int> selectedPolygons;
     vector<int> selectedVertices;
     int activePolygon;
     int activeVertex;
+    vector<Ray> helperRays;
 
     Selection()
-        : mode(POLYGON_SELECTION)
+        : selectionMode(POLYGON)
+        , editMode(DEFAULT)
         , selectedPolygons()
         , selectedVertices()
         , activePolygon(-1)
         , activeVertex(-1)
+        , helperRays()
     {
     }
 
@@ -35,7 +40,8 @@ public:
     void update(const Ray mouseRay, prism::Model& model);
 
 private:
-    void changeMode();
+    void changeSelectionMode();
+    void changeEditMode();
     void select(const Ray mouseRay, prism::Model& model);
     void color(prism::Model& model);
     void edit(prism::Model& model);

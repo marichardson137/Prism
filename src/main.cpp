@@ -20,7 +20,7 @@ using namespace prism;
 int main(void)
 {
 
-    prism::Model model = prism::Model(PRIMITIVE_CYLINDER);
+    prism::Model model = prism::Model(CYLINDER);
 
     // Window setting
     InitWindow(1280, 720, "Prism");
@@ -29,7 +29,7 @@ int main(void)
     // Camera settings
     Camera camera = { 0 };
     camera.position = (Vector3) { 10.0f, 10.0f, 10.0f };
-    camera.target = (Vector3) { 0.0f, 0.0f, 0.0f };
+    camera.target = (Vector3) { 0.0f, 0.5f, 0.0f };
     camera.up = (Vector3) { 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
 
@@ -77,7 +77,7 @@ int main(void)
         }
 
         selection.update(mouseRay, model);
-        if (IsKeyPressed(KEY_R))
+        if (IsKeyPressed(KEY_F))
             selection.reset();
 
         BeginDrawing();
@@ -96,8 +96,19 @@ int main(void)
         }
 
         // Draw the vertices
-        for (int i = 0; i < model.vertices.size(); i++) {
-            DrawSphere(model.vertices[i], 0.05f, model.vertexColors[i]);
+        if (selection.selectionMode == VERTEX) {
+            for (int i = 0; i < model.vertices.size(); i++) {
+                DrawSphere(model.vertices[i], 0.05f, model.vertexColors[i]);
+            }
+        }
+
+        Color rayColor = BLUE;
+        if (selection.editMode == SCALE)
+            rayColor = RED;
+        if (selection.editMode == EXTRUDE)
+            rayColor = GREEN;
+        for (Ray ray : selection.helperRays) {
+            DrawRay(ray, rayColor);
         }
 
         EndMode3D();
