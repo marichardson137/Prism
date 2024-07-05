@@ -26,7 +26,9 @@ int main(void)
 
     // Window setting
     InitWindow(1280, 720, "Prism");
+    SetWindowState(ConfigFlags::FLAG_WINDOW_RESIZABLE);
     SetTargetFPS(60);
+    SetWindowMinSize(500, 300);
 
     // Camera settings
     Camera camera = { 0 };
@@ -115,7 +117,7 @@ int main(void)
 
         EndMode3D();
 
-        GuiMessageBox((Rectangle) { 300, 300, 250, 100 }, "Message Box", "Two", "Three");
+        // GuiMessageBox((Rectangle) { 100, 100, 250, 100 }, "Message Box", "Two", "Three");
 
         // for (int i = 0; i < 8; i++) {
         //     char text[2];
