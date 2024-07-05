@@ -17,6 +17,7 @@ void Selection::reset()
     activePolygon = -1;
     activeVertex = -1;
     editMode = DEFAULT;
+    editAxis = NORMAL_AXIS;
     std::cout << "EDIT_MODE -> " << editMode << "\n";
 }
 
@@ -25,8 +26,10 @@ void Selection::update(const Ray mouseRay, prism::Model& model)
     helperRays.clear();
     changeSelectionMode();
     changeEditMode();
+    changeEditAxis();
     select(mouseRay, model);
     color(model);
+    addRays(model);
     edit(model);
 }
 
@@ -79,10 +82,6 @@ void Selection::color(prism::Model& model)
         for (int p : selectedPolygons) {
             Polygon& polygon = model.polygons[p];
             polygon.color = DARKBLUE;
-            Vector3 normal = Polygon::computeNormal(model.vertices, polygon.indices);
-            Vector3 center = Polygon::computeCenter(model.vertices, polygon.indices);
-            if (editMode != DEFAULT)
-                helperRays.push_back({ center, normal });
         }
         if (activePolygon != -1) {
             model.polygons[activePolygon].color = BLUE;
@@ -117,6 +116,47 @@ void Selection::color(prism::Model& model)
     }
 }
 
+void Selection::addRays(const prism::Model& model)
+{
+    if (editMode == DEFAULT)
+        return;
+
+    switch (selectionMode) {
+
+    case POLYGON: {
+        for (int p : selectedPolygons) {
+            const Polygon& polygon = model.polygons[p];
+            Vector3 center = Polygon::computeCenter(model.vertices, polygon.indices);
+            switch (editAxis) {
+            case NORMAL_AXIS: {
+                Vector3 normal = Polygon::computeNormal(model.vertices, polygon.indices);
+                helperRays.push_back({ center, normal });
+                helperRays.push_back({ center, Vector3Negate(normal) });
+            } break;
+            case X_AXIS: {
+                helperRays.push_back({ center, X_AXIS_VECTOR });
+                helperRays.push_back({ center, Vector3Negate(X_AXIS_VECTOR) });
+            } break;
+            case Y_AXIS: {
+                helperRays.push_back({ center, Y_AXIS_VECTOR });
+                helperRays.push_back({ center, Vector3Negate(Y_AXIS_VECTOR) });
+            } break;
+            case Z_AXIS: {
+                helperRays.push_back({ center, Z_AXIS_VECTOR });
+                helperRays.push_back({ center, Vector3Negate(Z_AXIS_VECTOR) });
+            } break;
+            }
+        }
+    } break;
+
+    case VERTEX: {
+    } break;
+
+    case EDGE: {
+    } break;
+    }
+}
+
 std::ostream& operator<<(std::ostream& os, const Vector3& vec)
 {
     os << "Vector3(" << vec.x << ", " << vec.y << ", " << vec.z << ")";
@@ -138,10 +178,30 @@ std::ostream& operator<<(std::ostream& os, const std::vector<int>& vec)
 
 void Selection::edit(prism::Model& model)
 {
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+        editMode = DEFAULT;
+
     switch (selectionMode) {
 
     case POLYGON:
-        EditPolygon(model, editMode, selectedPolygons, activePolygon);
+        Vector3 axis;
+        switch (editAxis) {
+        case NORMAL_AXIS: {
+            axis = Vector3Zero();
+        } break;
+        case X_AXIS: {
+            axis = X_AXIS_VECTOR;
+        } break;
+        case Y_AXIS: {
+            axis = Y_AXIS_VECTOR;
+        } break;
+        case Z_AXIS: {
+            axis = Z_AXIS_VECTOR;
+        } break;
+        }
+        EditPolygon(model, editMode, axis, selectedPolygons, activePolygon);
+        if (editMode == EXTRUDE)
+            editMode = TRANSFORM;
         break;
 
     case VERTEX:
@@ -181,5 +241,25 @@ void Selection::changeEditMode()
             editMode = ROTATE;
             std::cout << "EDIT_MODE -> " << editMode << "\n";
         }
+    }
+}
+
+void Selection::changeEditAxis()
+{
+    if (editMode != DEFAULT) {
+        if (IsKeyPressed(KEY_X)) {
+            editAxis = X_AXIS;
+        }
+        if (IsKeyPressed(KEY_Y)) {
+            editAxis = Y_AXIS;
+        }
+        if (IsKeyPressed(KEY_Z)) {
+            editAxis = Z_AXIS;
+        }
+        if (IsKeyPressed(KEY_N)) {
+            editAxis = NORMAL_AXIS;
+        }
+    } else {
+        editAxis = NORMAL_AXIS;
     }
 }

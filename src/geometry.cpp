@@ -79,11 +79,11 @@ void Polygon::draw(const std::vector<Vertex>& vertices)
 struct Vector3Comparator {
     bool operator()(const Vector3& lhs, const Vector3& rhs) const
     {
-        if (std::fabs(lhs.x - rhs.x) > 0.0001f)
+        if (std::fabs(lhs.x - rhs.x) > 0.001f)
             return lhs.x < rhs.x;
-        if (std::fabs(lhs.y - rhs.y) > 0.0001f)
+        if (std::fabs(lhs.y - rhs.y) > 0.001f)
             return lhs.y < rhs.y;
-        return std::fabs(lhs.z - rhs.z) > 0.0001f ? lhs.z < rhs.z : false;
+        return std::fabs(lhs.z - rhs.z) > 0.001f ? lhs.z < rhs.z : false;
     }
 };
 

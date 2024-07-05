@@ -19,6 +19,7 @@ class Selection {
 public:
     SelectionMode selectionMode;
     EditMode editMode;
+    EditAxis editAxis;
     vector<int> selectedPolygons;
     vector<int> selectedVertices;
     int activePolygon;
@@ -28,6 +29,7 @@ public:
     Selection()
         : selectionMode(POLYGON)
         , editMode(DEFAULT)
+        , editAxis(NORMAL_AXIS)
         , selectedPolygons()
         , selectedVertices()
         , activePolygon(-1)
@@ -42,8 +44,10 @@ public:
 private:
     void changeSelectionMode();
     void changeEditMode();
+    void changeEditAxis();
     void select(const Ray mouseRay, prism::Model& model);
     void color(prism::Model& model);
+    void addRays(const prism::Model& model);
     void edit(prism::Model& model);
 };
 
