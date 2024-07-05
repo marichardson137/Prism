@@ -10,7 +10,7 @@ void EditPolygon(prism::Model& model, EditMode editMode, Vector3 axis, vector<in
     Vector2 mouseDelta = GetMouseDelta();
 
     switch (editMode) {
-    case DEFAULT:
+    case SELECT:
         break;
     case TRANSFORM: {
         for (int p : selectedPolygons) {
@@ -95,7 +95,7 @@ void EditVertex(prism::Model& model, EditMode editMode, vector<int>& selectedVer
     Vector2 mouseDelta = GetMouseDelta();
 
     switch (editMode) {
-    case DEFAULT:
+    case SELECT:
         break;
     case TRANSFORM: {
         for (int v : selectedVertices) {

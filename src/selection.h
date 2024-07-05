@@ -28,7 +28,7 @@ public:
 
     Selection()
         : selectionMode(POLYGON)
-        , editMode(DEFAULT)
+        , editMode(SELECT)
         , editAxis(NORMAL_AXIS)
         , selectedPolygons()
         , selectedVertices()

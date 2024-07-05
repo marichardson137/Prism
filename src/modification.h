@@ -4,7 +4,7 @@
 #include "geometry.h"
 
 typedef enum {
-    DEFAULT = 0,
+    SELECT = 0,
     TRANSFORM,
     SCALE,
     EXTRUDE,

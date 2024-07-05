@@ -16,7 +16,7 @@ void Selection::reset()
     helperRays.clear();
     activePolygon = -1;
     activeVertex = -1;
-    editMode = DEFAULT;
+    editMode = SELECT;
     editAxis = NORMAL_AXIS;
     std::cout << "EDIT_MODE -> " << editMode << "\n";
 }
@@ -88,7 +88,7 @@ void Selection::color(prism::Model& model)
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                 if (!IsKeyDown(KEY_LEFT_SHIFT)) {
                     selectedPolygons.clear();
-                    editMode = DEFAULT;
+                    editMode = SELECT;
                 }
                 selectedPolygons.push_back(activePolygon);
             }
@@ -104,7 +104,7 @@ void Selection::color(prism::Model& model)
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                 if (!IsKeyDown(KEY_LEFT_SHIFT)) {
                     selectedVertices.clear();
-                    editMode = DEFAULT;
+                    editMode = SELECT;
                 }
                 selectedVertices.push_back(activeVertex);
             }
@@ -118,7 +118,7 @@ void Selection::color(prism::Model& model)
 
 void Selection::addRays(const prism::Model& model)
 {
-    if (editMode == DEFAULT)
+    if (editMode == SELECT)
         return;
 
     switch (selectionMode) {
@@ -179,7 +179,7 @@ std::ostream& operator<<(std::ostream& os, const std::vector<int>& vec)
 void Selection::edit(prism::Model& model)
 {
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-        editMode = DEFAULT;
+        editMode = SELECT;
 
     switch (selectionMode) {
 
@@ -246,7 +246,7 @@ void Selection::changeEditMode()
 
 void Selection::changeEditAxis()
 {
-    if (editMode != DEFAULT) {
+    if (editMode != SELECT) {
         if (IsKeyPressed(KEY_X)) {
             editAxis = X_AXIS;
         }

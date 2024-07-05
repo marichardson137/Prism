@@ -6,6 +6,8 @@
 
 #include "raylib.h"
 #include "raymath.h"
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
 
 #include "geometry.h"
 #include "rendering.h"
@@ -112,6 +114,8 @@ int main(void)
         }
 
         EndMode3D();
+
+        GuiMessageBox((Rectangle) { 300, 300, 250, 100 }, "Message Box", "Two", "Three");
 
         // for (int i = 0; i < 8; i++) {
         //     char text[2];
