@@ -60,7 +60,7 @@ void Polygon::triangulate(const std::vector<Vertex>& vertices)
     }
 }
 
-void Polygon::draw(const std::vector<Vertex>& vertices)
+void Polygon::drawFaces(const std::vector<Vertex>& vertices)
 {
     for (int i = 0; i < triangles.size(); i++) {
         Triangle triangle = triangles[i];
@@ -69,6 +69,10 @@ void Polygon::draw(const std::vector<Vertex>& vertices)
         Vector3 v3 = vertices[triangle.c];
         DrawTriangle3D(v1, v3, v2, color);
     }
+}
+
+void Polygon::drawEdges(const std::vector<Vertex>& vertices)
+{
     for (int i = 0; i < indices.size(); i++) {
         Vector3 start = vertices[indices[i]];
         Vector3 end = vertices[indices[(i + 1) % indices.size()]];

@@ -29,7 +29,8 @@ public:
     }
 
     void triangulate(const vector<Vertex>& vertices);
-    void draw(const vector<Vertex>& vertices);
+    void drawFaces(const vector<Vertex>& vertices);
+    void drawEdges(const vector<Vertex>& vertices);
     static Vector3 computeNormal(const vector<Vertex>& vertices, const vector<int>& indices);
     static Vector3 computeCenter(const vector<Vertex>& vertices, const vector<int>& indices);
 };

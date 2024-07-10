@@ -1,18 +1,24 @@
+// Standard Libraries
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <float.h>
 #include <iostream>
 
+// Raylib Core
 #include "raylib.h"
 #include "raymath.h"
+
+// Raylib Extensions
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
+// Local Modules
 #include "geometry.h"
 #include "rendering.h"
 #include "camera.h"
 #include "selection.h"
+#include "gui.h"
 
 #define MOUSE_ROTATION_SCALE_FACTOR 0.003f
 #define TRANSLATION_SPEED 0.05f
@@ -38,6 +44,8 @@ int main(void)
     camera.fovy = 45.0f;
 
     Selection selection = Selection();
+    Layout layout = Layout();
+    GuiLoadStyle("assets/gui/styles/style_dark.rgs");
 
     // Update loop
     while (!WindowShouldClose()) {
@@ -96,7 +104,9 @@ int main(void)
 
         // Draw the faces
         for (Polygon polygon : model.polygons) {
-            polygon.draw(model.vertices);
+            if (layout.RenderModeTG == 0)
+                polygon.drawFaces(model.vertices);
+            polygon.drawEdges(model.vertices);
         }
 
         // Draw the vertices
@@ -117,13 +127,8 @@ int main(void)
 
         EndMode3D();
 
-        // GuiMessageBox((Rectangle) { 100, 100, 250, 100 }, "Message Box", "Two", "Three");
-
-        // for (int i = 0; i < 8; i++) {
-        //     char text[2];
-        //     sprintf(text, "%d", i);
-        //     DrawText3D(camera, model.vertices[i], text, 20, RAYWHITE);
-        // }
+        // Draw GUI Elements
+        layout.update();
 
         EndDrawing();
     }
