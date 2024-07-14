@@ -71,6 +71,11 @@ void Polygon::drawFaces(const std::vector<Vertex>& vertices)
     }
 }
 
+inline bool operator==(const Color& lhs, const Color& rhs)
+{
+    return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b && lhs.a == rhs.a;
+}
+
 void Polygon::drawEdges(const std::vector<Vertex>& vertices)
 {
     for (int i = 0; i < indices.size(); i++) {
@@ -83,11 +88,11 @@ void Polygon::drawEdges(const std::vector<Vertex>& vertices)
 struct Vector3Comparator {
     bool operator()(const Vector3& lhs, const Vector3& rhs) const
     {
-        if (std::fabs(lhs.x - rhs.x) > 0.001f)
+        if (std::fabs(lhs.x - rhs.x) > 0.1f)
             return lhs.x < rhs.x;
-        if (std::fabs(lhs.y - rhs.y) > 0.001f)
+        if (std::fabs(lhs.y - rhs.y) > 0.1f)
             return lhs.y < rhs.y;
-        return std::fabs(lhs.z - rhs.z) > 0.001f ? lhs.z < rhs.z : false;
+        return std::fabs(lhs.z - rhs.z) > 0.1f ? lhs.z < rhs.z : false;
     }
 };
 
@@ -127,44 +132,44 @@ Vector3 Polygon::computeCenter(const vector<Vertex>& vertices, const vector<int>
 
 prism::Model::Model(PrimitiveType primitive)
 {
+
+    vector<Vertex> rawVertices;
+    vector<Polygon> rawPolygons;
+
     switch (primitive) {
 
     case CUBE:
-        vertices = {
-            { -1.0, -1.0, -1.0 },
-            { 1.0, -1.0, -1.0 },
-            { 1.0, 1.0, -1.0 },
-            { -1.0, 1.0, -1.0 },
-            { -1.0, -1.0, 1.0 },
-            { 1.0, -1.0, 1.0 },
-            { 1.0, 1.0, 1.0 },
-            { -1.0, 1.0, 1.0 }
-        };
-        polygons.push_back(Polygon({ 0, 1, 2, 3 }));
-        polygons.push_back(Polygon({ 4, 0, 3, 7 }));
-        polygons.push_back(Polygon({ 5, 4, 7, 6 }));
-        polygons.push_back(Polygon({ 1, 5, 6, 2 }));
-        polygons.push_back(Polygon({ 3, 2, 6, 7 })); // TOP
-        polygons.push_back(Polygon({ 4, 5, 1, 0 })); // BOTTOM
+        rawVertices.push_back({ -1.0, -1.0, -1.0 });
+        rawVertices.push_back({ 1.0, -1.0, -1.0 });
+        rawVertices.push_back({ 1.0, 1.0, -1.0 });
+        rawVertices.push_back({ -1.0, 1.0, -1.0 });
+        rawVertices.push_back({ -1.0, -1.0, 1.0 });
+        rawVertices.push_back({ 1.0, -1.0, 1.0 });
+        rawVertices.push_back({ 1.0, 1.0, 1.0 });
+        rawVertices.push_back({ -1.0, 1.0, 1.0 });
+        rawPolygons.push_back(Polygon({ 0, 1, 2, 3 }));
+        rawPolygons.push_back(Polygon({ 4, 0, 3, 7 }));
+        rawPolygons.push_back(Polygon({ 5, 4, 7, 6 }));
+        rawPolygons.push_back(Polygon({ 1, 5, 6, 2 }));
+        rawPolygons.push_back(Polygon({ 3, 2, 6, 7 })); // TOP
+        rawPolygons.push_back(Polygon({ 4, 5, 1, 0 })); // BOTTOM
+
+        *this = prism::Model(rawVertices, rawPolygons);
         break;
 
     case CYLINDER:
         for (int i = 0; i < 8; ++i) {
             float angle = i * (PI / 4.0);
-            vertices.push_back({ cos(angle), 1.0, sin(angle) });
-            vertices.push_back({ cos(angle), -1.0, sin(angle) });
+            rawVertices.push_back({ cos(angle), 1.0, sin(angle) });
+            rawVertices.push_back({ cos(angle), -1.0, sin(angle) });
         }
-        polygons.push_back(Polygon({ 0, 2, 4, 6, 8, 10, 12, 14 }));
-        polygons.push_back(Polygon({ 15, 13, 11, 9, 7, 5, 3, 1 }));
+        rawPolygons.push_back(Polygon({ 0, 2, 4, 6, 8, 10, 12, 14 }));
+        rawPolygons.push_back(Polygon({ 15, 13, 11, 9, 7, 5, 3, 1 }));
         for (int i = 0; i < 16; i += 2) {
-            polygons.push_back(Polygon({ (1 + i) % 16, (3 + i) % 16, (2 + i) % 16, (0 + i) % 16 }));
+            rawPolygons.push_back(Polygon({ (1 + i) % 16, (3 + i) % 16, (2 + i) % 16, (0 + i) % 16 }));
         }
-
+        *this = prism::Model(rawVertices, rawPolygons);
         break;
-    }
-
-    for (int i = 0; i < vertices.size(); i++) {
-        vertexColors.push_back(WHITE);
     }
 }
 
@@ -222,4 +227,20 @@ void prism::Model::splitPolygons()
         polygons.clear();
         polygons = newPolygons;
     }
+}
+
+void prism::Model::triangulatePolygons()
+{
+    for (Polygon& polygon : polygons) {
+        polygon.triangulate(vertices);
+    }
+}
+
+Vector3 prism::Model::computeCenter()
+{
+    Vector3 sum = { 0.0f, 0.0f, 0.0f };
+    for (Vertex& vertex : vertices) {
+        sum = Vector3Add(sum, vertex);
+    }
+    return Vector3Scale(sum, 1.0 / vertices.size());
 }

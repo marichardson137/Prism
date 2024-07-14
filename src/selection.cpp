@@ -11,26 +11,26 @@ using namespace prism;
 
 void Selection::reset()
 {
-    selectedPolygons.clear();
-    selectedVertices.clear();
-    helperRays.clear();
-    activePolygon = -1;
-    activeVertex = -1;
     editMode = SELECT;
     editAxis = NORMAL_AXIS;
+    selectedPolygons.clear();
+    selectedVertices.clear();
+    activePolygon = -1;
+    activeVertex = -1;
+    rays.clear();
     std::cout << "EDIT_MODE -> " << editMode << "\n";
 }
 
 void Selection::update(const Ray mouseRay, prism::Model& model)
 {
-    helperRays.clear();
     changeSelectionMode();
     changeEditMode();
     changeEditAxis();
     select(mouseRay, model);
     color(model);
-    addRays(model);
     edit(model);
+    if (IsKeyPressed(KEY_F))
+        reset();
 }
 
 void Selection::select(const Ray mouseRay, prism::Model& model)
@@ -69,13 +69,21 @@ void Selection::select(const Ray mouseRay, prism::Model& model)
         }
         break;
 
-    case EDGE:
+    case MODEL:
         break;
     }
 }
 
 void Selection::color(prism::Model& model)
 {
+    // Revert to base colors
+    for (Polygon& polygon : model.polygons) {
+        polygon.color = BEIGE;
+    }
+    for (Color& color : model.vertexColors) {
+        color = WHITE;
+    }
+
     switch (selectionMode) {
 
     case POLYGON:
@@ -111,51 +119,53 @@ void Selection::color(prism::Model& model)
         }
         break;
 
-    case EDGE:
-        break;
-    }
-}
-
-void Selection::addRays(const prism::Model& model)
-{
-    if (editMode == SELECT)
-        return;
-
-    switch (selectionMode) {
-
-    case POLYGON: {
-        for (int p : selectedPolygons) {
-            const Polygon& polygon = model.polygons[p];
-            Vector3 center = Polygon::computeCenter(model.vertices, polygon.indices);
-            switch (editAxis) {
-            case NORMAL_AXIS: {
-                Vector3 normal = Polygon::computeNormal(model.vertices, polygon.indices);
-                helperRays.push_back({ center, normal });
-                helperRays.push_back({ center, Vector3Negate(normal) });
-            } break;
-            case X_AXIS: {
-                helperRays.push_back({ center, X_AXIS_VECTOR });
-                helperRays.push_back({ center, Vector3Negate(X_AXIS_VECTOR) });
-            } break;
-            case Y_AXIS: {
-                helperRays.push_back({ center, Y_AXIS_VECTOR });
-                helperRays.push_back({ center, Vector3Negate(Y_AXIS_VECTOR) });
-            } break;
-            case Z_AXIS: {
-                helperRays.push_back({ center, Z_AXIS_VECTOR });
-                helperRays.push_back({ center, Vector3Negate(Z_AXIS_VECTOR) });
-            } break;
-            }
+    case MODEL:
+        for (Polygon& polygon : model.polygons) {
+            polygon.color = DARKBLUE;
         }
-    } break;
-
-    case VERTEX: {
-    } break;
-
-    case EDGE: {
-    } break;
     }
 }
+
+// void Selection::addRays(const prism::Model& model)
+// {
+//     if (editMode == SELECT)
+//         return;
+
+//     switch (selectionMode) {
+
+//     case POLYGON: {
+//         for (int p : selectedPolygons) {
+//             const Polygon& polygon = model.polygons[p];
+//             Vector3 center = Polygon::computeCenter(model.vertices, polygon.indices);
+//             switch (editAxis) {
+//             case NORMAL_AXIS: {
+//                 Vector3 normal = Polygon::computeNormal(model.vertices, polygon.indices);
+//                 helperRays.push_back({ center, normal });
+//                 helperRays.push_back({ center, Vector3Negate(normal) });
+//             } break;
+//             case X_AXIS: {
+//                 helperRays.push_back({ center, X_AXIS_VECTOR });
+//                 helperRays.push_back({ center, Vector3Negate(X_AXIS_VECTOR) });
+//             } break;
+//             case Y_AXIS: {
+//                 helperRays.push_back({ center, Y_AXIS_VECTOR });
+//                 helperRays.push_back({ center, Vector3Negate(Y_AXIS_VECTOR) });
+//             } break;
+//             case Z_AXIS: {
+//                 helperRays.push_back({ center, Z_AXIS_VECTOR });
+//                 helperRays.push_back({ center, Vector3Negate(Z_AXIS_VECTOR) });
+//             } break;
+//             }
+//         }
+//     } break;
+
+//     case VERTEX: {
+//     } break;
+
+//     case EDGE: {
+//     } break;
+//     }
+// }
 
 std::ostream& operator<<(std::ostream& os, const Vector3& vec)
 {
@@ -178,45 +188,75 @@ std::ostream& operator<<(std::ostream& os, const std::vector<int>& vec)
 
 void Selection::edit(prism::Model& model)
 {
+
+    rays.clear();
+
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         editMode = SELECT;
+
+    Vector3 axis;
+    switch (editAxis) {
+    case NORMAL_AXIS: {
+        axis = Vector3Zero();
+    } break;
+    case X_AXIS: {
+        axis = X_AXIS_VECTOR;
+    } break;
+    case Y_AXIS: {
+        axis = Y_AXIS_VECTOR;
+    } break;
+    case Z_AXIS: {
+        axis = Z_AXIS_VECTOR;
+    } break;
+    }
 
     switch (selectionMode) {
 
     case POLYGON:
-        Vector3 axis;
-        switch (editAxis) {
-        case NORMAL_AXIS: {
-            axis = Vector3Zero();
-        } break;
-        case X_AXIS: {
-            axis = X_AXIS_VECTOR;
-        } break;
-        case Y_AXIS: {
-            axis = Y_AXIS_VECTOR;
-        } break;
-        case Z_AXIS: {
-            axis = Z_AXIS_VECTOR;
-        } break;
-        }
-        EditPolygon(model, editMode, axis, selectedPolygons, activePolygon);
+        EditPolygon(model, editMode, axis, rays, selectedPolygons, activePolygon);
         if (editMode == EXTRUDE)
-            editMode = TRANSFORM;
+            editMode = TRANSLATE;
         break;
 
     case VERTEX:
-        EditVertex(model, editMode, selectedVertices, activeVertex);
+        EditVertex(model, editMode, axis, rays, selectedVertices, activeVertex);
         break;
 
-    case EDGE:
+    case MODEL:
+        EditModel(model, editMode, axis, rays);
         break;
+    }
+}
+
+void Selection::drawRays()
+{
+    Color rayColor;
+    switch (editMode) {
+    case SELECT:
+        rayColor = WHITE;
+        break;
+    case TRANSLATE:
+        rayColor = BLUE;
+        break;
+    case ROTATE:
+        rayColor = GREEN;
+        break;
+    case SCALE:
+        rayColor = RED;
+        break;
+    case EXTRUDE:
+        rayColor = WHITE;
+        break;
+    }
+    for (Ray& ray : rays) {
+        DrawRay(ray, rayColor);
     }
 }
 
 void Selection::changeSelectionMode()
 {
     if (IsKeyPressed(KEY_TAB)) {
-        selectionMode = static_cast<SelectionMode>((selectionMode + 1) % 2);
+        selectionMode = static_cast<SelectionMode>((selectionMode + 1) % 3);
         reset();
         std::cout << "SELECTION_MODE -> " << selectionMode << "\n";
     }
@@ -224,9 +264,9 @@ void Selection::changeSelectionMode()
 
 void Selection::changeEditMode()
 {
-    if (selectedPolygons.size() > 0 || selectedVertices.size() > 0) {
+    if (selectedPolygons.size() > 0 || selectedVertices.size() > 0 || selectionMode == MODEL) {
         if (IsKeyPressed(KEY_T)) {
-            editMode = TRANSFORM;
+            editMode = TRANSLATE;
             std::cout << "EDIT_MODE -> " << editMode << "\n";
         }
         if (IsKeyPressed(KEY_S)) {

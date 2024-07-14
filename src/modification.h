@@ -4,11 +4,13 @@
 #include "geometry.h"
 
 typedef enum {
+    // Basic
     SELECT = 0,
-    TRANSFORM,
+    TRANSLATE,
+    ROTATE,
     SCALE,
-    EXTRUDE,
-    ROTATE
+    // Special
+    EXTRUDE
 } EditMode;
 
 typedef enum {
@@ -22,7 +24,8 @@ const Vector3 X_AXIS_VECTOR = { 1.0f, 0.0f, 0.0f };
 const Vector3 Y_AXIS_VECTOR = { 0.0f, 1.0f, 0.0f };
 const Vector3 Z_AXIS_VECTOR = { 0.0f, 0.0f, 1.0f };
 
-void EditPolygon(prism::Model& model, EditMode editMode, Vector3 axis, vector<int>& selectedPolygons, int& activePolygon);
-void EditVertex(prism::Model& model, EditMode editMode, vector<int>& selectedVertices, int& activeVertex);
+void EditPolygon(prism::Model& model, EditMode editMode, Vector3 axis, vector<Ray>& rays, vector<int>& selectedPolygons, int& activePolygon);
+void EditVertex(prism::Model& model, EditMode editMode, Vector3 axis, vector<Ray>& rays, vector<int>& selectedVertices, int& activeVertex);
+void EditModel(prism::Model& model, EditMode editMode, Vector3 axis, vector<Ray>& rays);
 
 #endif

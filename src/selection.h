@@ -9,9 +9,9 @@
 #include "modification.h"
 
 typedef enum {
-    POLYGON = 0,
-    VERTEX,
-    EDGE
+    MODEL = 0,
+    POLYGON,
+    VERTEX
 } SelectionMode;
 
 class Selection {
@@ -24,7 +24,7 @@ public:
     vector<int> selectedVertices;
     int activePolygon;
     int activeVertex;
-    vector<Ray> helperRays;
+    vector<Ray> rays;
 
     Selection()
         : selectionMode(POLYGON)
@@ -34,12 +34,13 @@ public:
         , selectedVertices()
         , activePolygon(-1)
         , activeVertex(-1)
-        , helperRays()
+        , rays()
     {
     }
 
     void reset();
     void update(const Ray mouseRay, prism::Model& model);
+    void drawRays();
 
 private:
     void changeSelectionMode();
@@ -47,7 +48,6 @@ private:
     void changeEditAxis();
     void select(const Ray mouseRay, prism::Model& model);
     void color(prism::Model& model);
-    void addRays(const prism::Model& model);
     void edit(prism::Model& model);
 };
 

@@ -27,7 +27,7 @@ using namespace prism;
 
 int main(void)
 {
-
+    // Declare the base model
     prism::Model model = prism::Model(CYLINDER);
 
     // Window setting
@@ -43,7 +43,10 @@ int main(void)
     camera.up = (Vector3) { 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
 
+    // Selection object
     Selection selection = Selection();
+
+    // GUI settings
     Layout layout = Layout();
     GuiLoadStyle("assets/gui/styles/style_dark.rgs");
 
@@ -62,36 +65,15 @@ int main(void)
         Vector2 mousePos = GetMousePosition();
         Ray mouseRay = GetMouseRay(mousePos, camera);
 
+        // Split the model
         model.splitPolygons();
+        // Triangulate the model
+        model.triangulatePolygons();
 
-        for (Polygon& polygon : model.polygons) {
-            polygon.triangulate(model.vertices);
-            polygon.color = BEIGE;
-        }
-        for (Color& color : model.vertexColors) {
-            color = WHITE;
-        }
-
-        if (IsKeyPressed(KEY_D)) {
-            for (int i = 0; i < model.vertices.size(); i++) {
-                Vertex vertex = model.vertices[i];
-                std::cout << "V" << i << "(" << vertex.x << ", " << vertex.y << ", " << vertex.z << "), ";
-            }
-            std::cout << std::endl;
-            for (int i = 0; i < model.polygons.size(); i++) {
-                Polygon polygon = model.polygons[i];
-                std::cout << "Polygon " << i << ": { ";
-                for (int x = 0; x < polygon.indices.size(); x++) {
-                    std::cout << polygon.indices[x] << " ";
-                }
-                std::cout << "}\n";
-            }
-        }
-
+        // Update the selection
         selection.update(mouseRay, model);
-        if (IsKeyPressed(KEY_F))
-            selection.reset();
 
+        // Draw
         BeginDrawing();
 
         DrawFPS(10, 10);
@@ -116,14 +98,8 @@ int main(void)
             }
         }
 
-        Color rayColor = BLUE;
-        if (selection.editMode == SCALE)
-            rayColor = RED;
-        if (selection.editMode == EXTRUDE)
-            rayColor = GREEN;
-        for (Ray ray : selection.helperRays) {
-            DrawRay(ray, rayColor);
-        }
+        // Draw the helper rays
+        selection.drawRays();
 
         EndMode3D();
 
@@ -131,6 +107,23 @@ int main(void)
         layout.update();
 
         EndDrawing();
+
+        // Dump command
+        if (IsKeyPressed(KEY_D)) {
+            for (int i = 0; i < model.vertices.size(); i++) {
+                Vertex vertex = model.vertices[i];
+                std::cout << "V" << i << "(" << vertex.x << ", " << vertex.y << ", " << vertex.z << "), ";
+            }
+            std::cout << std::endl;
+            for (int i = 0; i < model.polygons.size(); i++) {
+                Polygon polygon = model.polygons[i];
+                std::cout << "Polygon " << i << ": { ";
+                for (int x = 0; x < polygon.indices.size(); x++) {
+                    std::cout << polygon.indices[x] << " ";
+                }
+                std::cout << "}\n";
+            }
+        }
     }
 
     CloseWindow();
