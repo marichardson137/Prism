@@ -63,6 +63,7 @@ public:
     void splitPolygons();
     void triangulatePolygons();
     Vector3 computeCenter();
+    BoundingBox getBoundingBox();
 };
 
 }

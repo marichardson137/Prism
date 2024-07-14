@@ -101,6 +101,9 @@ int main(void)
         // Draw the helper rays
         selection.drawRays();
 
+        // Draw the bounding box
+        DrawBoundingBox(model.getBoundingBox(), WHITE);
+
         EndMode3D();
 
         // Draw GUI Elements

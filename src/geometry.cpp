@@ -244,3 +244,22 @@ Vector3 prism::Model::computeCenter()
     }
     return Vector3Scale(sum, 1.0 / vertices.size());
 }
+
+BoundingBox prism::Model::getBoundingBox()
+{
+    // Get min and max vertex to construct bounds (AABB)
+    Vector3 minVertex = { 0 };
+    Vector3 maxVertex = { 0 };
+
+    for (Vertex& vertex : vertices) {
+        minVertex = Vector3Min(minVertex, vertex);
+        maxVertex = Vector3Max(maxVertex, vertex);
+    }
+
+    // Create the bounding box
+    BoundingBox box = { 0 };
+    box.min = minVertex;
+    box.max = maxVertex;
+
+    return box;
+}
