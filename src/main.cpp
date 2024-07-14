@@ -108,7 +108,7 @@ int main(void)
         EndMode3D();
 
         // Draw GUI Elements
-        layout.update();
+        layout.draw();
 
         EndDrawing();
 
