@@ -24,13 +24,19 @@ void Selection::reset()
 void Selection::update(const Ray mouseRay, prism::Model& model)
 {
     changeSelectionMode();
-    changeEditMode();
+    changeEditMode(model);
     changeEditAxis();
     select(mouseRay, model);
     color(model);
     edit(model);
     if (IsKeyPressed(KEY_F))
         reset();
+    if (IsKeyPressed(KEY_P)) {
+        if (!editStack.empty()) {
+            model = editStack.back();
+            editStack.pop_back();
+        }
+    }
 }
 
 void Selection::select(const Ray mouseRay, prism::Model& model)
@@ -191,8 +197,9 @@ void Selection::edit(prism::Model& model)
 
     rays.clear();
 
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         editMode = SELECT;
+    }
 
     Vector3 axis;
     switch (editAxis) {
@@ -262,23 +269,27 @@ void Selection::changeSelectionMode()
     }
 }
 
-void Selection::changeEditMode()
+void Selection::changeEditMode(const prism::Model& model)
 {
     if (selectedPolygons.size() > 0 || selectedVertices.size() > 0 || selectionMode == MODEL) {
         if (IsKeyPressed(KEY_T)) {
             editMode = TRANSLATE;
+            editStack.push_back(model);
             std::cout << "EDIT_MODE -> " << editMode << "\n";
         }
         if (IsKeyPressed(KEY_S)) {
             editMode = SCALE;
+            editStack.push_back(model);
             std::cout << "EDIT_MODE -> " << editMode << "\n";
         }
         if (IsKeyPressed(KEY_E)) {
             editMode = EXTRUDE;
+            editStack.push_back(model);
             std::cout << "EDIT_MODE -> " << editMode << "\n";
         }
         if (IsKeyPressed(KEY_R)) {
             editMode = ROTATE;
+            editStack.push_back(model);
             std::cout << "EDIT_MODE -> " << editMode << "\n";
         }
     }

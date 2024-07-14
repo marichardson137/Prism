@@ -60,6 +60,14 @@ public:
     {
     }
 
+    // Copy Constructor
+    Model(const Model& other)
+        : vertices(other.vertices)
+        , vertexColors(other.vertexColors)
+        , polygons(other.polygons)
+    {
+    }
+
     void splitPolygons();
     void triangulatePolygons();
     Vector3 computeCenter();

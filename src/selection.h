@@ -25,6 +25,7 @@ public:
     int activePolygon;
     int activeVertex;
     vector<Ray> rays;
+    vector<prism::Model> editStack;
 
     Selection()
         : selectionMode(POLYGON)
@@ -35,6 +36,7 @@ public:
         , activePolygon(-1)
         , activeVertex(-1)
         , rays()
+        , editStack()
     {
     }
 
@@ -44,7 +46,7 @@ public:
 
 private:
     void changeSelectionMode();
-    void changeEditMode();
+    void changeEditMode(const prism::Model& model);
     void changeEditAxis();
     void select(const Ray mouseRay, prism::Model& model);
     void color(prism::Model& model);

@@ -102,7 +102,8 @@ int main(void)
         selection.drawRays();
 
         // Draw the bounding box
-        DrawBoundingBox(model.getBoundingBox(), WHITE);
+        if (IsKeyDown(KEY_B))
+            DrawBoundingBox(model.getBoundingBox(), WHITE);
 
         EndMode3D();
 
