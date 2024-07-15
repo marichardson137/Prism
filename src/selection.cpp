@@ -401,10 +401,14 @@ void  Selection::EditVertex(prism::Model& model, Vector3 axis)
         break;
     case SCALE: {
         if (selectedVertices.size() >= 2) {
+            if (Vector3Equals(axis, Vector3Zero())) {
+                axis = Vector3One();
+            }
             Vector3 center = Polygon::computeCenter(model.vertices, selectedVertices);
             for (int v : selectedVertices) {
                 Vertex& vertex = model.vertices[v];
                 Vector3 towardsCenter = Vector3Subtract(center, vertex);
+                towardsCenter = Vector3Multiply(towardsCenter, axis);
                 towardsCenter = Vector3Normalize(towardsCenter);
                 towardsCenter = Vector3Scale(towardsCenter, MOVE_SPEED * mouseDelta.y);
                 vertex = Vector3Add(vertex, towardsCenter);
@@ -448,16 +452,19 @@ void Selection::EditModel(prism::Model& model, Vector3 axis)
     case SCALE: {
         if (Vector3Equals(axis, Vector3Zero())) {
             axis = Vector3One();
-        }
-        for (Vertex& vertex : model.vertices) {
-            Vector3 towardsCenter = Vector3Subtract(center, vertex);
-            towardsCenter = Vector3Multiply(towardsCenter, axis);
-            towardsCenter = Vector3Normalize(towardsCenter);
-            towardsCenter = Vector3Scale(towardsCenter, MOVE_SPEED * mouseDelta.y);
-            vertex = Vector3Add(vertex, towardsCenter);
-        }
-        if (!Vector3Equals(axis, Vector3One()))
+        } else {
             rays.push_back({ center, axis });
+        }
+        axis = Vector3Scale(axis, 1 - MOVE_SPEED * mouseDelta.y);
+        axis.x = (axis.x == 0) ? 1 : axis.x;
+        axis.y = (axis.y == 0) ? 1 : axis.y;
+        axis.z = (axis.z == 0) ? 1 : axis.z;
+        Matrix scalingMatrix = MatrixScale(axis.x, axis.y, axis.z);
+        for (Vertex& vertex : model.vertices) {
+            vertex = Vector3Subtract(vertex, center);
+            vertex = Vector3Transform(vertex, scalingMatrix);
+            vertex = Vector3Add(vertex, center);
+        }
         break;
     }
     }

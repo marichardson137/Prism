@@ -4,6 +4,7 @@
 #include <cmath>
 #include <algorithm>
 #include <iostream>
+#include <limits>
 
 #include "geometry.h"
 #include "triangulate.h"
@@ -248,8 +249,10 @@ Vector3 prism::Model::computeCenter()
 BoundingBox prism::Model::getBoundingBox()
 {
     // Get min and max vertex to construct bounds (AABB)
-    Vector3 minVertex = { 0 };
-    Vector3 maxVertex = { 0 };
+    float maxFloat = std::numeric_limits<float>::max();
+    float minFloat = -std::numeric_limits<float>::max();
+    Vector3 minVertex = { maxFloat, maxFloat, maxFloat };
+    Vector3 maxVertex = { minFloat, minFloat, minFloat };
 
     for (Vertex& vertex : vertices) {
         minVertex = Vector3Min(minVertex, vertex);
