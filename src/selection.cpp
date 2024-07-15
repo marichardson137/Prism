@@ -2,7 +2,6 @@
 #include <iostream>
 
 #include "selection.h"
-#include "modification.h"
 #include "geometry.h"
 #include "raylib.h"
 #include "raymath.h"
@@ -132,47 +131,6 @@ void Selection::color(prism::Model& model)
     }
 }
 
-// void Selection::addRays(const prism::Model& model)
-// {
-//     if (editMode == SELECT)
-//         return;
-
-//     switch (selectionMode) {
-
-//     case POLYGON: {
-//         for (int p : selectedPolygons) {
-//             const Polygon& polygon = model.polygons[p];
-//             Vector3 center = Polygon::computeCenter(model.vertices, polygon.indices);
-//             switch (editAxis) {
-//             case NORMAL_AXIS: {
-//                 Vector3 normal = Polygon::computeNormal(model.vertices, polygon.indices);
-//                 helperRays.push_back({ center, normal });
-//                 helperRays.push_back({ center, Vector3Negate(normal) });
-//             } break;
-//             case X_AXIS: {
-//                 helperRays.push_back({ center, X_AXIS_VECTOR });
-//                 helperRays.push_back({ center, Vector3Negate(X_AXIS_VECTOR) });
-//             } break;
-//             case Y_AXIS: {
-//                 helperRays.push_back({ center, Y_AXIS_VECTOR });
-//                 helperRays.push_back({ center, Vector3Negate(Y_AXIS_VECTOR) });
-//             } break;
-//             case Z_AXIS: {
-//                 helperRays.push_back({ center, Z_AXIS_VECTOR });
-//                 helperRays.push_back({ center, Vector3Negate(Z_AXIS_VECTOR) });
-//             } break;
-//             }
-//         }
-//     } break;
-
-//     case VERTEX: {
-//     } break;
-
-//     case EDGE: {
-//     } break;
-//     }
-// }
-
 std::ostream& operator<<(std::ostream& os, const Vector3& vec)
 {
     os << "Vector3(" << vec.x << ", " << vec.y << ", " << vec.z << ")";
@@ -220,17 +178,15 @@ void Selection::edit(prism::Model& model)
     switch (selectionMode) {
 
     case POLYGON:
-        EditPolygon(model, editMode, axis, rays, selectedPolygons, activePolygon);
-        if (editMode == EXTRUDE)
-            editMode = TRANSLATE;
+        EditPolygon(model, axis);
         break;
 
     case VERTEX:
-        EditVertex(model, editMode, axis, rays, selectedVertices, activeVertex);
+        EditVertex(model, axis);
         break;
 
     case MODEL:
-        EditModel(model, editMode, axis, rays);
+        EditModel(model, axis);
         break;
     }
 }
@@ -251,9 +207,6 @@ void Selection::drawRays()
     case SCALE:
         rayColor = RED;
         break;
-    case EXTRUDE:
-        rayColor = WHITE;
-        break;
     }
     for (Ray& ray : rays) {
         DrawRay(ray, rayColor);
@@ -271,28 +224,29 @@ void Selection::changeSelectionMode()
 
 void Selection::changeEditMode(const prism::Model& model)
 {
+    EditMode startEditMode = editMode;
     if (selectedPolygons.size() > 0 || selectedVertices.size() > 0 || selectionMode == MODEL) {
+        if (IsKeyPressed(KEY_ESCAPE)) {
+            editMode = SELECT;
+            std::cout << "EDIT_MODE -> " << editMode << "\n";
+        }
         if (IsKeyPressed(KEY_T)) {
             editMode = TRANSLATE;
-            editStack.push_back(model);
             std::cout << "EDIT_MODE -> " << editMode << "\n";
         }
         if (IsKeyPressed(KEY_S)) {
             editMode = SCALE;
-            editStack.push_back(model);
-            std::cout << "EDIT_MODE -> " << editMode << "\n";
-        }
-        if (IsKeyPressed(KEY_E)) {
-            editMode = EXTRUDE;
-            editStack.push_back(model);
             std::cout << "EDIT_MODE -> " << editMode << "\n";
         }
         if (IsKeyPressed(KEY_R)) {
             editMode = ROTATE;
-            editStack.push_back(model);
             std::cout << "EDIT_MODE -> " << editMode << "\n";
         }
     }
+
+    if (editMode != startEditMode)
+        editStack.push_back(model);
+
 }
 
 void Selection::changeEditAxis()
@@ -312,5 +266,199 @@ void Selection::changeEditAxis()
         }
     } else {
         editAxis = NORMAL_AXIS;
+    }
+}
+
+void Selection::EditPolygon(prism::Model& model, Vector3 axis)
+{
+    Vector2 mouseDelta = GetMouseDelta();
+
+    switch (editMode) {
+    case SELECT:
+        break;
+    case TRANSLATE: {
+        for (int p : selectedPolygons) {
+            Polygon& polygon = model.polygons[p];
+            Vector3 temp_axis = axis;
+            if (Vector3Equals(axis, Vector3Zero()))
+                temp_axis = Polygon::computeNormal(model.vertices, polygon.indices);
+            rays.push_back({ Polygon::computeCenter(model.vertices, polygon.indices), temp_axis });
+            temp_axis = Vector3Scale(temp_axis, -MOVE_SPEED * mouseDelta.y);
+            for (int i = 0; i < polygon.indices.size(); i++) {
+                model.vertices[polygon.indices[i]] = Vector3Add(model.vertices[polygon.indices[i]], temp_axis);
+            }
+        }
+        break;
+    }
+    case ROTATE: {
+        for (int p : selectedPolygons) {
+            Polygon& polygon = model.polygons[p];
+            Vector3 temp_axis = axis;
+            Vector3 center = Polygon::computeCenter(model.vertices, polygon.indices);
+            if (Vector3Equals(axis, Vector3Zero()))
+                temp_axis = Polygon::computeNormal(model.vertices, polygon.indices);
+            for (int i = 0; i < polygon.indices.size(); i++) {
+                Vertex& vertex = model.vertices[polygon.indices[i]];
+                vertex = Vector3Subtract(vertex, center);
+                vertex = Vector3RotateByAxisAngle(vertex, temp_axis, MOVE_SPEED * mouseDelta.y);
+                vertex = Vector3Add(vertex, center);
+            }
+            rays.push_back({ center, temp_axis });
+        }
+        break;
+    }
+    case SCALE: {
+        if (Vector3Equals(axis, Vector3Zero())) {
+            axis = Vector3One();
+        }
+        for (int p : selectedPolygons) {
+            Polygon& polygon = model.polygons[p];
+            Vector3 center = Polygon::computeCenter(model.vertices, polygon.indices);
+            for (int i = 0; i < polygon.indices.size(); i++) {
+                Vertex& vertex = model.vertices[polygon.indices[i]];
+                Vector3 towardsCenter = Vector3Subtract(center, vertex);
+                towardsCenter = Vector3Normalize(towardsCenter);
+                towardsCenter = Vector3Multiply(towardsCenter, axis);
+                towardsCenter = Vector3Scale(towardsCenter, MOVE_SPEED * mouseDelta.y);
+                vertex = Vector3Add(vertex, towardsCenter);
+                if (Vector3Equals(axis, Vector3One())) {
+                    rays.push_back({ center, Polygon::computeNormal(model.vertices, polygon.indices) });
+                } else {
+                    rays.push_back({ center, axis });
+                }
+            }
+        }
+        break;
+    }
+    }
+    // Extrude
+    if (IsKeyPressed(KEY_E)) {
+        if (selectedPolygons.size() >= 1) {
+            for (int p : selectedPolygons) {
+                // Create the extruded polygon
+                Polygon& polygon = model.polygons[p];
+                vector<int> oldIndices = polygon.indices;
+                Vector3 normal = Polygon::computeNormal(model.vertices, polygon.indices);
+                normal = Vector3Scale(normal, 0.01f);
+                vector<int> newIndices;
+                for (int i = 0; i < polygon.indices.size(); i++) {
+                    newIndices.push_back(model.vertices.size());
+                    Vertex newVertex = Vector3Add(model.vertices[polygon.indices[i]], normal);
+                    model.vertices.push_back(newVertex);
+                    model.vertexColors.push_back(WHITE);
+                }
+                polygon.indices = newIndices;
+                polygon.triangulate(model.vertices);
+                // Patch in sides
+                for (int i = 0; i < oldIndices.size(); i++) {
+                    int start = i;
+                    int end = (i + 1) % oldIndices.size();
+                    vector<int> sideIndices = {
+                        oldIndices[start],
+                        oldIndices[end],
+                        newIndices[end],
+                        newIndices[start]
+                    };
+                    Polygon sidePolygon = Polygon(sideIndices);
+                    sidePolygon.triangulate(model.vertices);
+                    model.polygons.push_back(sidePolygon);
+                }
+            }
+        }
+        editMode = TRANSLATE;
+        editStack.push_back(model);
+    }
+}
+
+void  Selection::EditVertex(prism::Model& model, Vector3 axis)
+{
+    Vector2 mouseDelta = GetMouseDelta();
+
+    switch (editMode) {
+    case SELECT:
+        break;
+    case TRANSLATE: {
+        for (int v : selectedVertices) {
+            Vertex& vertex = model.vertices[v];
+            vertex = Vector3Add(vertex, Vector3Scale(axis, -MOVE_SPEED * mouseDelta.y));
+            rays.push_back({ vertex, axis });
+        }
+
+        break;
+    }
+    case ROTATE:
+        if (selectedVertices.size() >= 2) {
+            Vector3 center = Polygon::computeCenter(model.vertices, selectedVertices);
+            for (int v : selectedVertices) {
+                Vertex& vertex = model.vertices[v];
+                vertex = Vector3Subtract(vertex, center);
+                vertex = Vector3RotateByAxisAngle(vertex, axis, MOVE_SPEED * mouseDelta.y);
+                vertex = Vector3Add(vertex, center);
+                rays.push_back({ center, axis });
+            }
+        }
+
+        break;
+    case SCALE: {
+        if (selectedVertices.size() >= 2) {
+            Vector3 center = Polygon::computeCenter(model.vertices, selectedVertices);
+            for (int v : selectedVertices) {
+                Vertex& vertex = model.vertices[v];
+                Vector3 towardsCenter = Vector3Subtract(center, vertex);
+                towardsCenter = Vector3Normalize(towardsCenter);
+                towardsCenter = Vector3Scale(towardsCenter, MOVE_SPEED * mouseDelta.y);
+                vertex = Vector3Add(vertex, towardsCenter);
+            }
+        }
+
+        break;
+    }
+    }
+}
+
+void Selection::EditModel(prism::Model& model, Vector3 axis)
+{
+    Vector2 mouseDelta = GetMouseDelta();
+    Vector3 center = model.computeCenter();
+
+    switch (editMode) {
+    case SELECT:
+        break;
+    case TRANSLATE: {
+        if (Vector3Equals(axis, Vector3Zero())) {
+            axis = Y_AXIS_VECTOR;
+        }
+        for (Vertex& vertex : model.vertices) {
+            vertex = Vector3Add(vertex, Vector3Scale(axis, -MOVE_SPEED * mouseDelta.y));
+        }
+        rays.push_back({ center, axis });
+        break;
+    }
+    case ROTATE:
+        if (Vector3Equals(axis, Vector3Zero())) {
+            axis = Y_AXIS_VECTOR;
+        }
+        for (Vertex& vertex : model.vertices) {
+            vertex = Vector3Subtract(vertex, center);
+            vertex = Vector3RotateByAxisAngle(vertex, axis, MOVE_SPEED * mouseDelta.y);
+            vertex = Vector3Add(vertex, center);
+        }
+        rays.push_back({ center, axis });
+        break;
+    case SCALE: {
+        if (Vector3Equals(axis, Vector3Zero())) {
+            axis = Vector3One();
+        }
+        for (Vertex& vertex : model.vertices) {
+            Vector3 towardsCenter = Vector3Subtract(center, vertex);
+            towardsCenter = Vector3Multiply(towardsCenter, axis);
+            towardsCenter = Vector3Normalize(towardsCenter);
+            towardsCenter = Vector3Scale(towardsCenter, MOVE_SPEED * mouseDelta.y);
+            vertex = Vector3Add(vertex, towardsCenter);
+        }
+        if (!Vector3Equals(axis, Vector3One()))
+            rays.push_back({ center, axis });
+        break;
+    }
     }
 }
