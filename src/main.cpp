@@ -110,6 +110,9 @@ int main(void)
         // Draw GUI Elements
         layout.draw();
 
+        if (GuiButton((Rectangle) { 8, 90, 32, 32 }, GuiIconText(ICON_FILE_SAVE, nullptr)))
+            model.exportSTL("model.stl");
+
         EndDrawing();
 
         // Dump command

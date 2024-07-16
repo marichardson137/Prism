@@ -4,6 +4,8 @@
 #include <cmath>
 #include <algorithm>
 #include <iostream>
+#include <string>
+#include <fstream>
 #include <limits>
 
 #include "geometry.h"
@@ -265,4 +267,42 @@ BoundingBox prism::Model::getBoundingBox()
     box.max = maxVertex;
 
     return box;
+}
+
+void prism::Model::exportSTL(const std::string& filename)
+{
+    std::ofstream stlFile;
+    stlFile.open(filename);
+
+    if (!stlFile.is_open()) {
+        std::cerr << "Failed to open file: " << filename << std::endl;
+        return;
+    }
+
+    stlFile << "solid STLExport" << std::endl;
+
+    for (const auto& polygon : polygons) {
+        for (const auto& triangle : polygon.triangles) {
+            const Vertex& v1 = vertices[triangle.a];
+            const Vertex& v2 = vertices[triangle.b];
+            const Vertex& v3 = vertices[triangle.c];
+
+            Vector3 edge1 = Vector3Subtract(v2, v1);
+            Vector3 edge2 = Vector3Subtract(v3, v1);
+            Vector3 normal = Vector3CrossProduct(edge2, edge1);
+            normal = Vector3Normalize(normal);
+
+            stlFile << "facet normal " << normal.x << " " << normal.y << " " << normal.z << std::endl;
+            stlFile << "    outer loop" << std::endl;
+            stlFile << "        vertex " << v1.x << " " << v1.y << " " << v1.z << std::endl;
+            stlFile << "        vertex " << v2.x << " " << v2.y << " " << v2.z << std::endl;
+            stlFile << "        vertex " << v3.x << " " << v3.y << " " << v3.z << std::endl;
+            stlFile << "    endloop" << std::endl;
+            stlFile << "endfacet" << std::endl;
+        }
+    }
+
+    stlFile << "endsolid STLExport" << std::endl;
+
+    stlFile.close();
 }

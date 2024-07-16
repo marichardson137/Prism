@@ -5,6 +5,8 @@
 #include "raymath.h"
 
 #include <vector>
+#include <string>
+
 using std::vector;
 
 namespace prism {
@@ -72,6 +74,7 @@ public:
     void triangulatePolygons();
     Vector3 computeCenter();
     BoundingBox getBoundingBox();
+    void exportSTL(const std::string& filename);
 };
 
 }
