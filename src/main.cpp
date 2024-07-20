@@ -14,6 +14,7 @@
 #include "raygui.h"
 
 // Local Modules
+#include "state.h"
 #include "geometry.h"
 #include "rendering.h"
 #include "camera.h"

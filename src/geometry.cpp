@@ -311,14 +311,15 @@ void prism::Model::exportSTL(const std::string& filename) const
 }
 
 // Helper function to check if a vertex is unique and add it if necessary
-int prism::Model::addUniqueVertex(const Vertex& vertex) {
-    auto it = std::find(vertices.begin(), vertices.end(), vertex);
-    if (it != vertices.end()) {
-        return std::distance(vertices.begin(), it);
-    } else {
-        vertices.push_back(vertex);
-        return vertices.size() - 1;
-    }
+int prism::Model::addUniqueVertex(const Vertex& vertex)
+{
+    // auto it = std::find(vertices.begin(), vertices.end(), vertex);
+    // if (it != vertices.end()) {
+    //     return std::distance(vertices.begin(), it);
+    // } else {
+    //     vertices.push_back(vertex);
+    //     return vertices.size() - 1;
+    // }
 }
 
 void prism::Model::importSTL(const std::string& filename)
@@ -362,4 +363,3 @@ void prism::Model::importSTL(const std::string& filename)
 
     // stlFile.close();
 }
-

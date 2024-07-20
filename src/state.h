@@ -1,5 +1,5 @@
 #ifndef _STATE_H_
-#define _STATE_H
+#define _STATE_H_
 
 #include "geometry.h"
 #include "selection.h"

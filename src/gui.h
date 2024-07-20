@@ -15,10 +15,9 @@ public:
     {
     }
 
-
-    void render(int screenWidth, int screenHeight, State& state)
-    {   
-        Vector2 screenCenter = {screenWidth / 2, screenHeight / 2};
+    void render(float screenWidth, float screenHeight, State& state)
+    {
+        Vector2 screenCenter = { screenWidth / 2.0f, screenHeight / 2.0f };
 
         // =================== Left ===================
         Rectangle ImportButton = { 8, 64, 32, 32 };
@@ -32,7 +31,7 @@ public:
         Rectangle CubeResetButton = { 8, 144, 32, 32 };
         if (GuiButton(CubeResetButton, GuiIconText(ICON_PLAYER_STOP, nullptr)))
             CubeReset(state.model);
-        
+
         Rectangle CylinderResetButton = { 8, 184, 32, 32 };
         if (GuiButton(CylinderResetButton, GuiIconText(ICON_PLAYER_RECORD, nullptr)))
             CylinderReset(state.model);
@@ -41,7 +40,7 @@ public:
         Rectangle UndoButton = { screenCenter.x - 148, 8, 32, 32 };
         if (GuiButton(UndoButton, GuiIconText(ICON_UNDO, nullptr)))
             Undo(state.selection, state.model);
-        
+
         Rectangle RenderModeButtons = { screenCenter.x - 108, 8, 72, 32 };
         GuiToggleGroup(RenderModeButtons, "DEFAULT;WIREFRAME;SHADED", &RenderModeTG);
 
@@ -59,7 +58,6 @@ public:
             CenterModel(state.model);
 
         // =================== Bottom ===================
-
     }
 
     void ImportModel()
@@ -96,7 +94,8 @@ public:
         camera.position = (Vector3) { 10.0f, 10.0f, 10.0f };
         camera.target = (Vector3) { 0.0f, 0.5f, 0.0f };
         camera.up = (Vector3) { 0.0f, 1.0f, 0.0f };
-        camera.fovy = 45.0f;;
+        camera.fovy = 45.0f;
+        ;
     }
 
     void CenterModel(prism::Model& model)
