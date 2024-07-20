@@ -1,7 +1,8 @@
 # Prism
 A cross-platform 3D modeling application written in C++
+
+## Current progress as of 7/20/2024
 ![Prism](https://github.com/user-attachments/assets/cba5c641-400f-437c-8565-33255fb6687b)
-*Screenshot from 7/20/2024*
 
 ## Current progress as of 7/4/2024
 ![Igloo-ezgif com-video-to-gif-converter](https://github.com/marichardson137/Prism/assets/77594556/0c6c75e4-42e4-4fee-85c8-73048ab04981)
