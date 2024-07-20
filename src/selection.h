@@ -62,6 +62,8 @@ public:
     void reset();
     void update(const Ray mouseRay, prism::Model& model);
     void drawRays();
+    void undo(prism::Model& model);
+    void redo(prism::Model& model);
 
 private:
     void changeSelectionMode();
@@ -70,6 +72,7 @@ private:
     void select(const Ray mouseRay, prism::Model& model);
     void color(prism::Model& model);
     void edit(prism::Model& model);
+
     void EditPolygon(prism::Model& model, Vector3 axis);
     void EditVertex(prism::Model& model, Vector3 axis);
     void EditModel(prism::Model& model, Vector3 axis);

@@ -70,11 +70,25 @@ public:
     {
     }
 
+    // Assignment Operator
+    Model& operator=(const Model& other) {
+        if (this != &other) {
+            vertices = other.vertices;
+            vertexColors = other.vertexColors;
+            polygons = other.polygons;
+        }
+        return *this;
+    }
+
     void splitPolygons();
     void triangulatePolygons();
     Vector3 computeCenter();
     BoundingBox getBoundingBox();
-    void exportSTL(const std::string& filename);
+    void exportSTL(const std::string& filename) const;
+    void importSTL(const std::string& filename);
+
+private:
+    int addUniqueVertex(const Vertex& vertex);
 };
 
 }

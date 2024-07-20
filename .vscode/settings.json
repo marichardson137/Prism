@@ -56,6 +56,8 @@
         "typeinfo": "cpp",
         "__config": "cpp",
         "map": "cpp",
-        "set": "cpp"
+        "set": "cpp",
+        "fstream": "cpp",
+        "sstream": "cpp"
     }
 }

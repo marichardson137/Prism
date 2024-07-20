@@ -3,9 +3,12 @@
 #include <set>
 #include <cmath>
 #include <algorithm>
-#include <iostream>
 #include <string>
+#include <iostream>
 #include <fstream>
+#include <sstream>
+#include <unordered_map>
+#include <tuple>
 #include <limits>
 
 #include "geometry.h"
@@ -269,7 +272,7 @@ BoundingBox prism::Model::getBoundingBox()
     return box;
 }
 
-void prism::Model::exportSTL(const std::string& filename)
+void prism::Model::exportSTL(const std::string& filename) const
 {
     std::ofstream stlFile;
     stlFile.open(filename);
@@ -306,3 +309,57 @@ void prism::Model::exportSTL(const std::string& filename)
 
     stlFile.close();
 }
+
+// Helper function to check if a vertex is unique and add it if necessary
+int prism::Model::addUniqueVertex(const Vertex& vertex) {
+    auto it = std::find(vertices.begin(), vertices.end(), vertex);
+    if (it != vertices.end()) {
+        return std::distance(vertices.begin(), it);
+    } else {
+        vertices.push_back(vertex);
+        return vertices.size() - 1;
+    }
+}
+
+void prism::Model::importSTL(const std::string& filename)
+{
+    // std::ifstream stlFile;
+    // stlFile.open(filename);
+
+    // if (!stlFile.is_open()) {
+    //     std::cerr << "Failed to open file: " << filename << std::endl;
+    //     return;
+    // }
+
+    // std::string line;
+    // std::vector<Vertex> tempVertices;
+    // polygons.clear();
+    // vertices.clear();
+    // vertexColors.clear();
+
+    // while (std::getline(stlFile, line)) {
+    //     std::istringstream iss(line);
+    //     std::string token;
+    //     iss >> token;
+
+    //     if (token == "vertex") {
+    //         float x, y, z;
+    //         iss >> x >> y >> z;
+    //         tempVertices.emplace_back(x, y, z);
+    //     } else if (token == "endfacet") {
+    //         if (tempVertices.size() >= 3) {
+    //             // Assuming triangles
+    //             int index1 = addUniqueVertex(tempVertices[tempVertices.size() - 3]);
+    //             int index2 = addUniqueVertex(tempVertices[tempVertices.size() - 2]);
+    //             int index3 = addUniqueVertex(tempVertices[tempVertices.size() - 1]);
+
+    //             Polygon polygon;
+    //             polygon.triangles.push_back(triangle);
+    //             polygons.push_back(polygon);
+    //         }
+    //     }
+    // }
+
+    // stlFile.close();
+}
+

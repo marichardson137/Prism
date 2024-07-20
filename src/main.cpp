@@ -27,8 +27,11 @@ using namespace prism;
 
 int main(void)
 {
+    // Declare the editor state
+    State state;
+
     // Declare the base model
-    prism::Model model = prism::Model(CYLINDER);
+    state.model = prism::Model(CYLINDER);
 
     // Window setting
     InitWindow(1280, 720, "Prism");
@@ -37,14 +40,14 @@ int main(void)
     SetWindowMinSize(500, 300);
 
     // Camera settings
-    Camera camera = { 0 };
-    camera.position = (Vector3) { 10.0f, 10.0f, 10.0f };
-    camera.target = (Vector3) { 0.0f, 0.5f, 0.0f };
-    camera.up = (Vector3) { 0.0f, 1.0f, 0.0f };
-    camera.fovy = 45.0f;
+    state.camera = { 0 };
+    state.camera.position = (Vector3) { 10.0f, 10.0f, 10.0f };
+    state.camera.target = (Vector3) { 0.0f, 0.5f, 0.0f };
+    state.camera.up = (Vector3) { 0.0f, 1.0f, 0.0f };
+    state.camera.fovy = 45.0f;
 
     // Selection object
-    Selection selection = Selection();
+    state.selection = Selection();
 
     // GUI settings
     Layout layout = Layout();
@@ -56,22 +59,22 @@ int main(void)
         // Update camera
         if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
             Vector2 mousePositionDelta = GetMouseDelta();
-            _CameraYaw(&camera, -mousePositionDelta.x * MOUSE_ROTATION_SCALE_FACTOR, true);
-            _CameraPitch(&camera, -mousePositionDelta.y * MOUSE_ROTATION_SCALE_FACTOR, true, true, false);
+            _CameraYaw(&state.camera, -mousePositionDelta.x * MOUSE_ROTATION_SCALE_FACTOR, true);
+            _CameraPitch(&state.camera, -mousePositionDelta.y * MOUSE_ROTATION_SCALE_FACTOR, true, true, false);
         }
-        _CameraMoveToTarget(&camera, -GetMouseWheelMove());
+        _CameraMoveToTarget(&state.camera, -GetMouseWheelMove());
 
         // Get mouse info
-        Vector2 mousePos = GetMousePosition();
-        Ray mouseRay = GetMouseRay(mousePos, camera);
+        state.mousePos = GetMousePosition();
+        state.mouseRay = GetMouseRay(state.mousePos, state.camera);
 
         // Split the model
-        model.splitPolygons();
+        state.model.splitPolygons();
         // Triangulate the model
-        model.triangulatePolygons();
+        state.model.triangulatePolygons();
 
-        // Update the selection
-        selection.update(mouseRay, model);
+        // Update the state.selection
+        state.selection.update(state.mouseRay, state.model);
 
         // Draw
         BeginDrawing();
@@ -80,50 +83,47 @@ int main(void)
 
         ClearBackground((Color) { 20, 20, 20, 255 });
 
-        BeginMode3D(camera);
+        BeginMode3D(state.camera);
 
         DrawGrid(10, 1.0f);
 
         // Draw the faces
-        for (Polygon polygon : model.polygons) {
+        for (Polygon polygon : state.model.polygons) {
             if (layout.RenderModeTG == 0)
-                polygon.drawFaces(model.vertices);
-            polygon.drawEdges(model.vertices);
+                polygon.drawFaces(state.model.vertices);
+            polygon.drawEdges(state.model.vertices);
         }
 
         // Draw the vertices
-        if (selection.selectionMode == VERTEX) {
-            for (int i = 0; i < model.vertices.size(); i++) {
-                DrawSphere(model.vertices[i], 0.05f, model.vertexColors[i]);
+        if (state.selection.selectionMode == VERTEX) {
+            for (int i = 0; i < state.model.vertices.size(); i++) {
+                DrawSphere(state.model.vertices[i], 0.05f, state.model.vertexColors[i]);
             }
         }
 
         // Draw the helper rays
-        selection.drawRays();
+        state.selection.drawRays();
 
         // Draw the bounding box
         if (IsKeyDown(KEY_B))
-            DrawBoundingBox(model.getBoundingBox(), WHITE);
+            DrawBoundingBox(state.model.getBoundingBox(), WHITE);
 
         EndMode3D();
 
         // Draw GUI Elements
-        layout.draw();
-
-        if (GuiButton((Rectangle) { 8, 90, 32, 32 }, GuiIconText(ICON_FILE_SAVE, nullptr)))
-            model.exportSTL("model.stl");
+        layout.render(GetScreenWidth(), GetScreenHeight(), state);
 
         EndDrawing();
 
         // Dump command
         if (IsKeyPressed(KEY_D)) {
-            for (int i = 0; i < model.vertices.size(); i++) {
-                Vertex vertex = model.vertices[i];
+            for (int i = 0; i < state.model.vertices.size(); i++) {
+                Vertex vertex = state.model.vertices[i];
                 std::cout << "V" << i << "(" << vertex.x << ", " << vertex.y << ", " << vertex.z << "), ";
             }
             std::cout << std::endl;
-            for (int i = 0; i < model.polygons.size(); i++) {
-                Polygon polygon = model.polygons[i];
+            for (int i = 0; i < state.model.polygons.size(); i++) {
+                Polygon polygon = state.model.polygons[i];
                 std::cout << "Polygon " << i << ": { ";
                 for (int x = 0; x < polygon.indices.size(); x++) {
                     std::cout << polygon.indices[x] << " ";

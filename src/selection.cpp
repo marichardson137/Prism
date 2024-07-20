@@ -31,11 +31,21 @@ void Selection::update(const Ray mouseRay, prism::Model& model)
     if (IsKeyPressed(KEY_F))
         reset();
     if (IsKeyPressed(KEY_P)) {
-        if (!editStack.empty()) {
-            model = editStack.back();
-            editStack.pop_back();
-        }
+        undo(model);
     }
+}
+
+void Selection::undo(prism::Model& model)
+{
+    if (!editStack.empty()) {
+        model = editStack.back();
+        editStack.pop_back();
+    }
+}
+
+void Selection::redo(prism::Model& model)
+{
+    ; // TODO
 }
 
 void Selection::select(const Ray mouseRay, prism::Model& model)
