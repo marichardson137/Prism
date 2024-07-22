@@ -32,10 +32,10 @@ int main(void)
     State state;
 
     // Declare the base model
-    state.model = prism::Model(CYLINDER);
+    state.model = prism::Model(CUBE);
 
     // Window setting
-    InitWindow(1280, 720, "Prism");
+    InitWindow(1280, 1280, "Prism");
     SetWindowState(ConfigFlags::FLAG_WINDOW_RESIZABLE);
     SetTargetFPS(60);
     SetWindowMinSize(500, 300);
@@ -92,7 +92,15 @@ int main(void)
         for (Polygon polygon : state.model.polygons) {
             if (layout.RenderModeTG == 0)
                 polygon.drawFaces(state.model.vertices);
-            polygon.drawEdges(state.model.vertices);
+            // polygon.drawEdges(state.model.vertices);
+        }
+
+        // Draw the edges
+        for (int i = 0; i < state.model.edges.size(); i++) {
+            Edge edge = state.model.edges[i];
+            Vector3 start = state.model.vertices[edge.a];
+            Vector3 end = state.model.vertices[edge.b];
+            DrawLine3D(start, end, state.model.edgeColors[i]);
         }
 
         // Draw the vertices

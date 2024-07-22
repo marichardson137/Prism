@@ -98,6 +98,9 @@ void Selection::color(prism::Model& model)
     for (Color& color : model.vertexColors) {
         color = WHITE;
     }
+    for (Color& color : model.edgeColors) {
+        color = WHITE;
+    }
 
     switch (selectionMode) {
 
@@ -256,7 +259,6 @@ void Selection::changeEditMode(const prism::Model& model)
 
     if (editMode != startEditMode)
         editStack.push_back(model);
-
 }
 
 void Selection::changeEditAxis()
@@ -351,18 +353,35 @@ void Selection::EditPolygon(prism::Model& model, Vector3 axis)
                 Vector3 normal = Polygon::computeNormal(model.vertices, polygon.indices);
                 normal = Vector3Scale(normal, 0.01f);
                 vector<int> newIndices;
+                vector<int> newEdgeIndices;
                 for (int i = 0; i < polygon.indices.size(); i++) {
-                    newIndices.push_back(model.vertices.size());
+                    int baseIndex = model.vertices.size();
+                    newIndices.push_back(baseIndex);
                     Vertex newVertex = Vector3Add(model.vertices[polygon.indices[i]], normal);
                     model.vertices.push_back(newVertex);
                     model.vertexColors.push_back(WHITE);
+                    newEdgeIndices.push_back(model.edges.size());
+                    model.edgeColors.push_back(WHITE);
+                    Edge newEdge = { baseIndex, (baseIndex + 1) % static_cast<int>(polygon.indices.size()) };
+                    model.edges.push_back(newEdge);
                 }
                 polygon.indices = newIndices;
+                polygon.edgeIndices = newEdgeIndices;
                 polygon.triangulate(model.vertices);
                 // Patch in sides
+                int startingEdge = model.edges.size();
                 for (int i = 0; i < oldIndices.size(); i++) {
                     int start = i;
                     int end = (i + 1) % oldIndices.size();
+                    vector<int> sideEdgeIndices = { static_cast<int>(model.edges.size()) };
+                    if (i < oldIndices.size() - 1) {
+                        vector<int> sideEdgeIndices = { static_cast<int>(model.edges.size()) + 1 };
+                    } else {
+                        vector<int> sideEdgeIndices = { startingEdge };
+                    }
+                    Edge newSideEdge = { oldIndices[start], newIndices[start] };
+                    model.edges.push_back(newSideEdge);
+                    model.edgeColors.push_back(WHITE);
                     vector<int> sideIndices = {
                         oldIndices[start],
                         oldIndices[end],
@@ -370,6 +389,7 @@ void Selection::EditPolygon(prism::Model& model, Vector3 axis)
                         newIndices[start]
                     };
                     Polygon sidePolygon = Polygon(sideIndices);
+                    sidePolygon.edgeIndices = sideEdgeIndices;
                     sidePolygon.triangulate(model.vertices);
                     model.polygons.push_back(sidePolygon);
                 }
@@ -380,7 +400,7 @@ void Selection::EditPolygon(prism::Model& model, Vector3 axis)
     }
 }
 
-void  Selection::EditVertex(prism::Model& model, Vector3 axis)
+void Selection::EditVertex(prism::Model& model, Vector3 axis)
 {
     Vector2 mouseDelta = GetMouseDelta();
 

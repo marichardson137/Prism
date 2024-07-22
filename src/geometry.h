@@ -20,11 +20,13 @@ typedef struct {
 class Polygon {
 public:
     vector<int> indices;
+    vector<int> edgeIndices;
     vector<Triangle> triangles;
     Color color;
 
     Polygon(const vector<int> indices)
         : indices(indices)
+        , edgeIndices()
         , triangles()
         , color(BEIGE)
     {
@@ -42,11 +44,17 @@ typedef enum {
     CYLINDER
 } PrimitiveType;
 
+typedef struct {
+    int a, b;
+} Edge;
+
 class Model {
 public:
     vector<Vertex> vertices;
     vector<Color> vertexColors;
     vector<Polygon> polygons;
+    vector<Edge> edges;
+    vector<Color> edgeColors;
 
     Model()
         : Model(CUBE)
@@ -55,10 +63,12 @@ public:
 
     Model(PrimitiveType primitive);
 
-    Model(const vector<Vertex> vertices, const vector<Polygon> polygons)
+    Model(const vector<Vertex> vertices, const vector<Polygon> polygons, const vector<Edge> edges)
         : vertices(vertices)
         , vertexColors(vertices.size(), WHITE)
         , polygons(polygons)
+        , edges(edges)
+        , edgeColors(edges.size(), WHITE)
     {
     }
 
@@ -67,15 +77,20 @@ public:
         : vertices(other.vertices)
         , vertexColors(other.vertexColors)
         , polygons(other.polygons)
+        , edges(other.edges)
+        , edgeColors(other.edgeColors)
     {
     }
 
     // Assignment Operator
-    Model& operator=(const Model& other) {
+    Model& operator=(const Model& other)
+    {
         if (this != &other) {
             vertices = other.vertices;
             vertexColors = other.vertexColors;
             polygons = other.polygons;
+            edges = other.edges;
+            edgeColors = other.edgeColors;
         }
         return *this;
     }
@@ -88,7 +103,7 @@ public:
     void importSTL(const std::string& filename);
 
 private:
-    int addUniqueVertex(const Vertex& vertex);
+    void addUniqueVertex(const Vertex& vertex);
 };
 
 }
