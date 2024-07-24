@@ -35,7 +35,8 @@ void Selection::update(const Ray mouseRay, prism::Model& model)
     }
 }
 
-void Selection::saveModel(const prism::Model& model) {
+void Selection::saveModel(const prism::Model& model)
+{
     editStack.push_back(model);
 }
 
@@ -113,8 +114,7 @@ void Selection::color(prism::Model& model)
             Polygon& polygon = model.polygons[p];
             polygon.color = DARKBLUE;
             for (int edgeIndex : polygon.edgeIndices) {
-                std::cout << "Edge " << edgeIndex;
-                model.edgeColors[edgeIndex] = GREEN;
+                model.edgeColors[edgeIndex] = PINK;
             }
         }
         if (activePolygon != -1) {
@@ -399,8 +399,7 @@ void Selection::EditPolygon(prism::Model& model, Vector3 axis)
                         newIndices[end],
                         newIndices[start]
                     };
-                    Polygon sidePolygon = Polygon(sideIndices);
-                    sidePolygon.edgeIndices = sideEdgeIndices;
+                    Polygon sidePolygon = Polygon(sideIndices, sideEdgeIndices);
                     sidePolygon.triangulate(model.vertices);
                     model.polygons.push_back(sidePolygon);
                 }

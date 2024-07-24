@@ -155,13 +155,12 @@ prism::Model::Model(PrimitiveType primitive)
         rawVertices.push_back({ 1.0, 1.0, 1.0 });
         rawVertices.push_back({ -1.0, 1.0, 1.0 });
 
-        rawPolygons.push_back(Polygon({ 0, 1, 2, 3 }));
-        rawPolygons.push_back(Polygon({ 4, 0, 3, 7 }));
-        rawPolygons.push_back(Polygon({ 5, 4, 7, 6 }));
-        rawPolygons.push_back(Polygon({ 1, 5, 6, 2 }));
-        rawPolygons.push_back(Polygon({ 3, 2, 6, 7 })); // TOP
-
-        rawPolygons.push_back(Polygon({ 4, 5, 1, 0 })); // BOTTOM
+        rawPolygons.push_back(Polygon({ 0, 1, 2, 3 }, { 0, 1, 2, 3 }));
+        rawPolygons.push_back(Polygon({ 4, 0, 3, 7 }, { 7, 3, 9, 8 }));
+        rawPolygons.push_back(Polygon({ 5, 4, 7, 6 }, { 4, 8, 10, 11 }));
+        rawPolygons.push_back(Polygon({ 1, 5, 6, 2 }, { 5, 11, 6, 1 }));
+        rawPolygons.push_back(Polygon({ 3, 2, 6, 7 }, { 2, 6, 10, 9 })); // TOP
+        rawPolygons.push_back(Polygon({ 4, 5, 1, 0 }, { 4, 5, 0, 7 })); // BOTTOM
 
         rawEdges.push_back({ 0, 1 }); // 0
         rawEdges.push_back({ 1, 2 }); // 1
@@ -176,13 +175,6 @@ prism::Model::Model(PrimitiveType primitive)
         rawEdges.push_back({ 7, 6 }); // 10
         rawEdges.push_back({ 6, 5 }); // 11
 
-        rawPolygons[0].edgeIndices = { 0, 1, 2, 3 };
-        rawPolygons[1].edgeIndices = { 7, 3, 9, 8 };
-        rawPolygons[2].edgeIndices = { 4, 8, 10, 11 };
-        rawPolygons[3].edgeIndices = { 5, 11, 6, 1 };
-        rawPolygons[4].edgeIndices = { 2, 6, 10, 9 };
-        rawPolygons[5].edgeIndices = { 4, 5, 0, 7 };
-
         *this = prism::Model(rawVertices, rawPolygons, rawEdges);
         break;
 
@@ -192,10 +184,10 @@ prism::Model::Model(PrimitiveType primitive)
             rawVertices.push_back({ cos(angle), 1.0, sin(angle) });
             rawVertices.push_back({ cos(angle), -1.0, sin(angle) });
         }
-        rawPolygons.push_back(Polygon({ 0, 2, 4, 6, 8, 10, 12, 14 })); // Top
-        rawPolygons.push_back(Polygon({ 15, 13, 11, 9, 7, 5, 3, 1 })); // Bottom
+        rawPolygons.push_back(Polygon({ 0, 2, 4, 6, 8, 10, 12, 14 }, {})); // Top
+        rawPolygons.push_back(Polygon({ 15, 13, 11, 9, 7, 5, 3, 1 }, {})); // Bottom
         for (int i = 0; i < 16; i += 2) {
-            rawPolygons.push_back(Polygon({ (1 + i) % 16, (3 + i) % 16, (2 + i) % 16, (0 + i) % 16 }));
+            rawPolygons.push_back(Polygon({ (1 + i) % 16, (3 + i) % 16, (2 + i) % 16, (0 + i) % 16 }, {}));
         }
         *this = prism::Model(rawVertices, rawPolygons, rawEdges);
         break;
@@ -242,7 +234,7 @@ void prism::Model::splitPolygons()
                 if (contains(uniqueIndices, polygon.indices[i]))
                     finalIndices.push_back(polygon.indices[i]);
             }
-            Polygon newPolygon = Polygon(finalIndices);
+            Polygon newPolygon = Polygon(finalIndices, polygon.edgeIndices); // FIX
             if (first) {
                 newPolygons.push_back(newPolygon);
                 first = false;

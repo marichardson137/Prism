@@ -24,9 +24,9 @@ public:
     vector<Triangle> triangles;
     Color color;
 
-    Polygon(const vector<int> indices)
+    Polygon(const vector<int> indices, const vector<int> edgeIndices)
         : indices(indices)
-        , edgeIndices()
+        , edgeIndices(edgeIndices)
         , triangles()
         , color(BEIGE)
     {
