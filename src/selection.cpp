@@ -35,6 +35,10 @@ void Selection::update(const Ray mouseRay, prism::Model& model)
     }
 }
 
+void Selection::saveModel(const prism::Model& model) {
+    editStack.push_back(model);
+}
+
 void Selection::undo(prism::Model& model)
 {
     if (!editStack.empty()) {
@@ -108,6 +112,10 @@ void Selection::color(prism::Model& model)
         for (int p : selectedPolygons) {
             Polygon& polygon = model.polygons[p];
             polygon.color = DARKBLUE;
+            for (int edgeIndex : polygon.edgeIndices) {
+                std::cout << "Edge " << edgeIndex;
+                model.edgeColors[edgeIndex] = GREEN;
+            }
         }
         if (activePolygon != -1) {
             model.polygons[activePolygon].color = BLUE;
@@ -258,7 +266,7 @@ void Selection::changeEditMode(const prism::Model& model)
     }
 
     if (editMode != startEditMode)
-        editStack.push_back(model);
+        saveModel(model);
 }
 
 void Selection::changeEditAxis()
@@ -362,7 +370,10 @@ void Selection::EditPolygon(prism::Model& model, Vector3 axis)
                     model.vertexColors.push_back(WHITE);
                     newEdgeIndices.push_back(model.edges.size());
                     model.edgeColors.push_back(WHITE);
-                    Edge newEdge = { baseIndex, (baseIndex + 1) % static_cast<int>(polygon.indices.size()) };
+                    int edgeEndIndex = baseIndex + 1;
+                    if (i == polygon.indices.size() - 1)
+                        edgeEndIndex -= polygon.indices.size();
+                    Edge newEdge = { baseIndex, edgeEndIndex };
                     model.edges.push_back(newEdge);
                 }
                 polygon.indices = newIndices;
@@ -396,7 +407,7 @@ void Selection::EditPolygon(prism::Model& model, Vector3 axis)
             }
         }
         editMode = TRANSLATE;
-        editStack.push_back(model);
+        saveModel(model);
     }
 }
 

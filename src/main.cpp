@@ -35,7 +35,7 @@ int main(void)
     state.model = prism::Model(CUBE);
 
     // Window setting
-    InitWindow(1280, 1280, "Prism");
+    InitWindow(1280, 720, "Prism");
     SetWindowState(ConfigFlags::FLAG_WINDOW_RESIZABLE);
     SetTargetFPS(60);
     SetWindowMinSize(500, 300);
@@ -49,6 +49,7 @@ int main(void)
 
     // Selection object
     state.selection = Selection();
+    state.selection.saveModel(state.model);
 
     // GUI settings
     Layout layout = Layout();

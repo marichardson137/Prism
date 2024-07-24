@@ -62,6 +62,7 @@ public:
     void reset();
     void update(const Ray mouseRay, prism::Model& model);
     void drawRays();
+    void saveModel(const prism::Model& model);
     void undo(prism::Model& model);
     void redo(prism::Model& model);
 
