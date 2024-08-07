@@ -183,11 +183,19 @@ prism::Model::Model(PrimitiveType primitive)
             float angle = i * (PI / 4.0);
             rawVertices.push_back({ cos(angle), 1.0, sin(angle) });
             rawVertices.push_back({ cos(angle), -1.0, sin(angle) });
+            rawEdges.push_back({ i * 2, i * 2 + 1 }); // Vertical edges (0-7)
         }
-        rawPolygons.push_back(Polygon({ 0, 2, 4, 6, 8, 10, 12, 14 }, {})); // Top
-        rawPolygons.push_back(Polygon({ 15, 13, 11, 9, 7, 5, 3, 1 }, {})); // Bottom
         for (int i = 0; i < 16; i += 2) {
-            rawPolygons.push_back(Polygon({ (1 + i) % 16, (3 + i) % 16, (2 + i) % 16, (0 + i) % 16 }, {}));
+            rawEdges.push_back({ i, (i + 2) % 16 }); // Top Edges (8-15)
+        }
+        for (int i = 0; i < 16; i += 2) {
+            rawEdges.push_back({ i + 1, (i + 3) % 16 }); // Bottom Edges (16-23)
+        }
+        rawPolygons.push_back(Polygon({ 0, 2, 4, 6, 8, 10, 12, 14 }, { 8, 9, 10, 11, 12, 13, 14, 15 })); // Top
+        rawPolygons.push_back(Polygon({ 15, 13, 11, 9, 7, 5, 3, 1 }, { 16, 17, 18, 19, 20, 21, 22, 23 })); // Bottom
+        for (int i = 0; i < 16; i += 2) {
+            int h = i / 2;
+            rawPolygons.push_back(Polygon({ (1 + i) % 16, (3 + i) % 16, (2 + i) % 16, (0 + i) % 16 }, { h, (h + 1) % 8, h + 8, h + 16 }));
         }
         *this = prism::Model(rawVertices, rawPolygons, rawEdges);
         break;

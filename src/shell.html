@@ -170,28 +170,17 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
     </style>
   </head>
   <body>
-    <div id="header">
-        <a id="logo" href="https://www.raylib.com"></a>
-
-        <div class="spinner" id='spinner'></div>
-        <div class="emscripten" id="status">Downloading...</div>
-
-        <span id='controls'>
-          <span><input type="button" value="📜 SOURCE CODE" onclick="location.href='https://github.com/raysan5/raylib';"/></span>
-          <span><input type="button" value="🖵 FULLSCREEN" onclick="Module.requestFullscreen(false, false)"></span>
-          <span><input type="button" id="btn-audio" value="🔇 MUTE" onclick="toggleAudio()"></span>
-        </span>
-
-        <div class="emscripten">
-          <progress value="0" max="100" id="progress" hidden=1></progress>
-        </div>
-    </div>
+    <div class="spinner" id='spinner'></div>
+    <div class="emscripten" id="status">Downloading...</div>
+    <div class="emscripten">
+        <progress value="0" max="100" id="progress" hidden=1></progress>
+    </div> 
 
     <div class="emscripten_border">
       <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
     </div>
 
-    <textarea id="output" rows="8"></textarea>
+    <!-- <textarea id="output" rows="8"></textarea> -->
 
     <script type='text/javascript' src="https://cdn.jsdelivr.net/gh/eligrey/FileSaver.js/dist/FileSaver.min.js"> </script>
     <script type='text/javascript'>
@@ -213,6 +202,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
         }
     </script>
     <script type='text/javascript'>
+
         var statusElement = document.querySelector('#status');
         var progressElement = document.querySelector('#progress');
         var spinnerElement = document.querySelector('#spinner');

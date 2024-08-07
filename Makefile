@@ -21,7 +21,7 @@ build_win:
 
 # Web specific flags and libraries
 WEB_OPT = -Llib/ lib/libraylib_web.a -Wall -D_DEFAULT_SOURCE -Wno-missing-braces -Wunused-result -Os -s USE_GLFW=3 -s ASYNCIFY -s TOTAL_MEMORY=67108864 -s FORCE_FILESYSTEM=1 --shell-file src/shell.html -DPLATFORM_WEB -s 'EXPORTED_FUNCTIONS=["_free","_malloc","_main"]' -s EXPORTED_RUNTIME_METHODS=ccall
-WEB_OUT = -o "web/prism.html"
+WEB_OUT = -o "index.html"
 
 build_web:
 	$(WEB_COMPILER) $(CPP_STD) $(CFILES) $(SOURCE_LIBS) $(WEB_OUT) $(WEB_OPT)

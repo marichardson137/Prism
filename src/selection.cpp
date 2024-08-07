@@ -384,11 +384,11 @@ void Selection::EditPolygon(prism::Model& model, Vector3 axis)
                 for (int i = 0; i < oldIndices.size(); i++) {
                     int start = i;
                     int end = (i + 1) % oldIndices.size();
-                    vector<int> sideEdgeIndices = { static_cast<int>(model.edges.size()) };
+                    vector<int> sideEdgeIndices = { startingEdge - static_cast<int>(oldIndices.size()) * 2 + i, startingEdge - static_cast<int>(oldIndices.size()) + i, static_cast<int>(model.edges.size()) };
                     if (i < oldIndices.size() - 1) {
-                        vector<int> sideEdgeIndices = { static_cast<int>(model.edges.size()) + 1 };
+                        sideEdgeIndices.push_back({ static_cast<int>(model.edges.size()) + 1 });
                     } else {
-                        vector<int> sideEdgeIndices = { startingEdge };
+                        sideEdgeIndices.push_back({ startingEdge });
                     }
                     Edge newSideEdge = { oldIndices[start], newIndices[start] };
                     model.edges.push_back(newSideEdge);

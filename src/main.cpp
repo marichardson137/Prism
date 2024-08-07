@@ -26,19 +26,23 @@
 
 using namespace prism;
 
+int screenWidth = 1280;
+int screenHeight = 720;
+
 int main(void)
 {
+
+    // Window setting
+    InitWindow(screenWidth, screenHeight, "Prism");
+    SetTargetFPS(60);
+    // SetWindowState(ConfigFlags::FLAG_WINDOW_RESIZABLE);
+    // SetWindowMinSize(500, 300);
+
     // Declare the editor state
     State state;
 
     // Declare the base model
     state.model = prism::Model(CUBE);
-
-    // Window setting
-    InitWindow(1280, 720, "Prism");
-    SetWindowState(ConfigFlags::FLAG_WINDOW_RESIZABLE);
-    SetTargetFPS(60);
-    SetWindowMinSize(500, 300);
 
     // Camera settings
     state.camera = { 0 };
