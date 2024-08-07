@@ -1,5 +1,7 @@
 # Prism
-A cross-platform 3D modeling application written in C++
+**A cross-platform 3D modeling application written in C++**
+
+Available on MacOS, Windows, Linux, and [Web](https://marichardson137.github.io/Prism/)
 
 ## Current progress as of 7/20/2024
 ![Prism](https://github.com/user-attachments/assets/cba5c641-400f-437c-8565-33255fb6687b)
