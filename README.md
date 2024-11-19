@@ -3,6 +3,8 @@
 
 Available on MacOS, Windows, Linux, and [Web](https://marichardson137.github.io/Prism/)
 
+_Note: to center the canvas for the Web version, try zooming ("ctrl" + "+") to trigger the resize. This will ensure the GUI is visible and mouse interactions are aligned._
+
 ## Current progress as of 7/20/2024
 ![Prism](https://github.com/user-attachments/assets/cba5c641-400f-437c-8565-33255fb6687b)
 
