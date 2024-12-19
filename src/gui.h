@@ -8,6 +8,8 @@
 #include "geometry.h"
 #include "state.h"
 
+#define DEFAULT_DIMENSION 64
+
 class Layout {
 public:
     Layout()
@@ -20,40 +22,40 @@ public:
         Vector2 screenCenter = { screenWidth / 2.0f, screenHeight / 2.0f };
 
         // =================== Left ===================
-        Rectangle ImportButton = { 8, 64, 32, 32 };
+        Rectangle ImportButton = { DEFAULT_DIMENSION / 8, DEFAULT_DIMENSION * 2, DEFAULT_DIMENSION, DEFAULT_DIMENSION };
         if (GuiButton(ImportButton, GuiIconText(ICON_FILE_OPEN, nullptr)))
             ImportModel();
 
-        Rectangle ExportButton = { 8, 104, 32, 32 };
+        Rectangle ExportButton = { DEFAULT_DIMENSION / 8, DEFAULT_DIMENSION * 3.25, DEFAULT_DIMENSION, DEFAULT_DIMENSION };
         if (GuiButton(ExportButton, GuiIconText(ICON_FILE_SAVE, nullptr)))
             ExportModel(state.model);
 
-        Rectangle CubeResetButton = { 8, 144, 32, 32 };
+        Rectangle CubeResetButton = { DEFAULT_DIMENSION / 8, DEFAULT_DIMENSION * 4.5, DEFAULT_DIMENSION, DEFAULT_DIMENSION };
         if (GuiButton(CubeResetButton, GuiIconText(ICON_PLAYER_STOP, nullptr)))
             CubeReset(state.model);
 
-        Rectangle CylinderResetButton = { 8, 184, 32, 32 };
+        Rectangle CylinderResetButton = { DEFAULT_DIMENSION / 8, DEFAULT_DIMENSION * 5.75, DEFAULT_DIMENSION, DEFAULT_DIMENSION };
         if (GuiButton(CylinderResetButton, GuiIconText(ICON_PLAYER_RECORD, nullptr)))
             CylinderReset(state.model);
 
         // =================== Top ===================
-        Rectangle UndoButton = { screenCenter.x - 148, 8, 32, 32 };
+        Rectangle UndoButton = { screenCenter.x - DEFAULT_DIMENSION * 4.625, DEFAULT_DIMENSION / 8, DEFAULT_DIMENSION, DEFAULT_DIMENSION };
         if (GuiButton(UndoButton, GuiIconText(ICON_UNDO, nullptr)))
             Undo(state.selection, state.model);
 
-        Rectangle RenderModeButtons = { screenCenter.x - 108, 8, 72, 32 };
+        Rectangle RenderModeButtons = { screenCenter.x - DEFAULT_DIMENSION * 3.375, DEFAULT_DIMENSION / 8, DEFAULT_DIMENSION * 2.25, DEFAULT_DIMENSION };
         GuiToggleGroup(RenderModeButtons, "DEFAULT;WIREFRAME;SHADED", &RenderModeTG);
 
-        Rectangle RedoButton = { screenCenter.x + 120, 8, 32, 32 };
+        Rectangle RedoButton = { screenCenter.x + DEFAULT_DIMENSION * 3.75, DEFAULT_DIMENSION / 8, DEFAULT_DIMENSION, DEFAULT_DIMENSION };
         if (GuiButton(RedoButton, GuiIconText(ICON_REDO, nullptr)))
             Redo(state.selection, state.model);
 
         // =================== Right ===================
-        Rectangle CenterCameraButton = { screenWidth - 40, 64, 32, 32 };
+        Rectangle CenterCameraButton = { screenWidth - DEFAULT_DIMENSION * 1.25, DEFAULT_DIMENSION * 2, DEFAULT_DIMENSION, DEFAULT_DIMENSION };
         if (GuiButton(CenterCameraButton, GuiIconText(ICON_CAMERA, nullptr)))
             CenterCamera(state.camera);
 
-        Rectangle CenterModelButton = { screenWidth - 40, 104, 32, 32 };
+        Rectangle CenterModelButton = { screenWidth - DEFAULT_DIMENSION * 1.25, DEFAULT_DIMENSION * 3.25, DEFAULT_DIMENSION, DEFAULT_DIMENSION };
         if (GuiButton(CenterModelButton, GuiIconText(ICON_ZOOM_MEDIUM, nullptr)))
             CenterModel(state.model);
 

@@ -4,6 +4,7 @@ WEB_COMPILER = emcc
 CPP_STD = -std=c++17
 SOURCE_LIBS = -Ilib/
 CFILES = src/*.cpp
+CFILES_WIN = $(wildcard src/*.cpp)
 
 # MacOS specific flags and libraries
 OSX_OPT =  -g -Wall -Llib/ -framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL lib/libraylib_osx.a
@@ -17,7 +18,7 @@ WIN_OPT = -g -Wall -Llib/ lib/libraylib_win.a -lopengl32 -lgdi32 -lwinmm -static
 WIN_OUT = -o "bin/build_win.exe"
 
 build_win:
-	$(WIN_COMPILER) $(CPP_STD) $(CFILES) $(SOURCE_LIBS) $(WIN_OUT) $(WIN_OPT)
+	$(WIN_COMPILER) $(CPP_STD) $(CFILES_WIN) $(SOURCE_LIBS) $(WIN_OUT) $(WIN_OPT)
 
 # Web specific flags and libraries
 WEB_OPT = -Llib/ lib/libraylib_web.a -Wall -D_DEFAULT_SOURCE -Wno-missing-braces -Wunused-result -Os -s USE_GLFW=3 -s ASYNCIFY -s TOTAL_MEMORY=67108864 -s FORCE_FILESYSTEM=1 --shell-file src/shell.html -DPLATFORM_WEB -s 'EXPORTED_FUNCTIONS=["_free","_malloc","_main"]' -s EXPORTED_RUNTIME_METHODS=ccall

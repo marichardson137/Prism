@@ -35,8 +35,8 @@ int main(void)
     // Window setting
     InitWindow(screenWidth, screenHeight, "Prism");
     SetTargetFPS(60);
-    // SetWindowState(ConfigFlags::FLAG_WINDOW_RESIZABLE);
-    // SetWindowMinSize(500, 300);
+    SetWindowState(ConfigFlags::FLAG_WINDOW_RESIZABLE);
+    SetWindowMinSize(500, 300);
 
     // Declare the editor state
     State state;
@@ -58,6 +58,10 @@ int main(void)
     // GUI settings
     Layout layout = Layout();
     GuiLoadStyle("assets/gui/styles/style_dark.rgs");
+    GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
+
+    // BoundingBox flag
+    bool drawBoundingBox = false;
 
     // Update loop
     while (!WindowShouldClose()) {
@@ -119,7 +123,9 @@ int main(void)
         state.selection.drawRays();
 
         // Draw the bounding box
-        if (IsKeyDown(KEY_B))
+        if (IsKeyPressed(KEY_B))
+            drawBoundingBox = !drawBoundingBox;
+        if (drawBoundingBox)
             DrawBoundingBox(state.model.getBoundingBox(), WHITE);
 
         EndMode3D();
